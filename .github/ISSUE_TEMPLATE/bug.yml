@@ -1,0 +1,38 @@
+name: Bug report
+description: Report reproducible collection, UI, API, or sync behavior.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What happened?
+      description: Include the expected behavior and what appeared instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide a minimal sequence, URL parameters, and relevant non-secret request ID.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Collection UI
+        - Title detail
+        - Public API
+        - Synchronization
+        - Deployment or tooling
+    validations:
+      required: true
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed tokens, authorization headers, account IDs, and private logs.
+          required: true

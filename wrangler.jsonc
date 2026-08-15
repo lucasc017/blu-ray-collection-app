@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "blu-ray-collection-app",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "vars": {
+    "TMDB_API_BASE_URL": "https://api.themoviedb.org/3",
+    "TMDB_IMAGE_BASE_URL": "https://image.tmdb.org/t/p",
+    "TMDB_METADATA_TTL_DAYS": "30",
+    "SYNC_MAX_EXTERNAL_FETCHES": "40",
+  },
+  "secrets": {
+    "required": ["BLURAY_COLLECTION_URL", "TMDB_READ_ACCESS_TOKEN", "SYNC_ADMIN_TOKEN"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blu-ray-collection-db",
+      "database_id": "2a0b9915-05d9-4534-afc8-f021317a5c9f",
+      "migrations_dir": "./migrations",
+    },
+  ],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "triggers": {
+    "crons": ["*/15 * * * *"],
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+}

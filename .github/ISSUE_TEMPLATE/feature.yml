@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose a product improvement within or beyond V1.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Explain the browsing or collection-management problem before proposing a solution.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Data, permission, or deployment impact
+      description: Note new providers, credentials, storage, accounts, or external writes.
