@@ -2,6 +2,8 @@
 
 A public, read-only Blu-ray and 4K UHD collection browser. React and Vite render the interface; a Hono Cloudflare Worker serves the API and scheduled importer; D1 stores the collection; TMDB supplies cached movie and TV-season metadata.
 
+Production: [The Disc Shelf](https://blu-ray-collection-app.blu-ray-collection-app.workers.dev)
+
 ## Requirements
 
 - Node.js 24 LTS and npm 11
@@ -57,13 +59,16 @@ The fallback importer verifies the pagination set, extracts only physical-releas
 
 ## Production deployment
 
-1. Run `npx wrangler d1 create blu-ray-collection-db` if the database has not been provisioned, then place the returned database ID in `wrangler.jsonc`.
-2. Run `npm run db:migrate:remote`.
-3. Set `BLURAY_COLLECTION_URL`, `TMDB_READ_ACCESS_TOKEN`, and `SYNC_ADMIN_TOKEN` using separate interactive `npx wrangler secret put <NAME>` prompts.
-4. Run `npm run check`, then `npm run deploy`.
-5. Trigger the protected sync once or wait for its daily slot, then monitor structured logs with `npx wrangler tail`. Use the saved-HTML importer only when an authoritative full replacement is needed.
+Production deploys are manual and require explicit owner authorization. GitHub Actions validates but
+does not deploy. Run the public release gates, apply any forward-only D1 migrations, deploy with
+Wrangler, smoke-test the public API, and record the new Worker version. The first deployment for a
+new account must attach the three required secrets from a temporary file outside the repository;
+routine deployments preserve the existing Worker secrets.
 
-Do not pass secret values as command-line arguments or commit `.dev.vars`.
+Follow the complete [production deployment and operations runbook](docs/DEPLOYMENT.md). It covers
+first-time provisioning, secret-safe AI operation, D1 backups, manual import batches, Cron/log
+verification, and code rollback. Do not pass secret values as command-line arguments, use
+`.dev.vars` as a deployment secrets file, or commit private database exports.
 
 The committed D1 database ID is an infrastructure identifier, not a credential. Forks must create
 their own D1 database and replace it before deploying. Runtime configuration rejects placeholder
@@ -82,4 +87,4 @@ images, names, and trademarks retain their own terms. The generated
 
 ## Documentation
 
-Start with [Product](docs/PRODUCT.md), [Architecture](docs/ARCHITECTURE.md), [Data sync](docs/DATA_SYNC.md), [Deployment](docs/DEPLOYMENT.md), and the [open-source release checklist](docs/OPEN_SOURCE_RELEASE.md). Agents must read `AGENTS.md` plus any nested instructions that apply to the files being changed.
+Start with [Product](docs/PRODUCT.md), [Architecture](docs/ARCHITECTURE.md), [Data sync](docs/DATA_SYNC.md), [Deployment](docs/DEPLOYMENT.md), and the [open-source release checklist](docs/OPEN_SOURCE_RELEASE.md). AI-assisted sessions should also read the [AI development guide](docs/AI_DEVELOPMENT.md), root `AGENTS.md`, and every nested instruction file that applies to the files being changed.

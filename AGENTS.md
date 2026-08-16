@@ -11,6 +11,8 @@ Maintain a public, read-only physical media collection. D1 is the application so
 3. SQL files in `migrations/` for the database.
 4. `docs/` for product intent and architectural rationale.
 5. `docs/STATUS.md` for current progress and known gaps.
+6. `docs/DEPLOYMENT.md` for the production release, import, verification, and rollback runbook.
+7. `docs/AI_DEVELOPMENT.md` for session orientation and task-specific validation guidance.
 
 If documentation and code disagree, verify behavior with tests, then update both in the same change.
 
@@ -24,9 +26,20 @@ If documentation and code disagree, verify behavior with tests, then update both
 - Keep commits scoped and update `docs/STATUS.md` for completed milestones or new blockers.
 - Do not commit, push, deploy, create or publish a repository, change repository visibility, or alter remote settings unless the human explicitly authorizes that exact action in the current task.
 
+## Production operations
+
+- Production is a manually deployed Cloudflare Worker. GitHub Actions validates only and must not be given deployment secrets without a separately approved design change.
+- Treat deploys, remote migrations, production imports/exports, secret changes, rollbacks, D1 mutations, routes, and domains as distinct external actions requiring explicit authorization in the current task.
+- When authorized, follow `docs/DEPLOYMENT.md`; record the active version before deployment and smoke-test the public URL and API afterward.
+- Routine deploys preserve existing Worker secrets. First-deploy secret transport must use an operating-system temporary file outside the repository, contain only the three required keys, and be deleted in a guaranteed cleanup step.
+- Never use `.dev.vars` directly as a deployment secrets file because it also contains local tooling configuration. A subprocess may load it without printing values for an explicitly authorized operation.
+- Treat D1 exports as private collection data. Store them outside the repository, never commit them, and never expose temporary download URLs.
+- Code rollback does not roll back D1. Never edit an applied migration or reset production storage; use a reviewed forward migration or explicit restore plan.
+
 ## Security and reliability
 
 - Never read, print, commit, or expose `.dev.vars`, collection source URLs, TMDB tokens, sync tokens, Cloudflare credentials, or authorization headers.
+- Do not open or copy the generated `dist/blu_ray_collection_app/.dev.vars`; verify the generated `.assetsignore` and Wrangler upload summary exclude secret files.
 - Keep personal email addresses and local filesystem paths out of source and documentation. Use the configured GitHub no-reply identity for any later approved commits.
 - Secrets are Worker bindings only. Never add a `VITE_` secret.
 - Run `npm run security:scan` and `npm run license:check` as part of the completion gate. Do not weaken a scanner to make a finding disappear; remove the sensitive data or document a narrowly reviewed exception.

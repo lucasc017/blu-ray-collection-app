@@ -1,5 +1,8 @@
 name: CI
 
+# Intentionally validation-only. Production deployment remains a separately authorized manual
+# operation documented in docs/DEPLOYMENT.md; do not add Cloudflare or provider secrets here.
+
 on:
   push:
     branches: [main, "codex/**"]

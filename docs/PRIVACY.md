@@ -29,3 +29,7 @@ does not store collection HTML, browser recordings, source credentials, or cooki
 The owner-assisted importer processes saved HTML locally and uploads only validated release IDs,
 labels, category markers, and public release-page links. Raw collection HTML and the configured
 collection URL are not uploaded or stored.
+
+Production D1 exports contain the owner's derived collection and synchronization history. They are
+private operator backups, must remain outside the public repository and CI artifacts, and should be
+shared or restored only through an explicitly approved operational process.
