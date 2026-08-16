@@ -15,7 +15,8 @@ const validEnv = {
 describe("Worker configuration validation", () => {
   it("accepts valid sync configuration without returning unrelated bindings", () => {
     expect(validateSyncConfiguration(validEnv)).toEqual({
-      collectionUrl: "https://www.blu-ray.com/community/collection.php?u=123456&categoryid=7",
+      collectionUrl:
+        "https://www.blu-ray.com/community/collection.php?u=123456&categoryid=7&sortby=recentlyaddedcollection",
       tmdbApiBaseUrl: "https://api.themoviedb.org/3",
       tmdbReadAccessToken: validEnv.TMDB_READ_ACCESS_TOKEN,
     });

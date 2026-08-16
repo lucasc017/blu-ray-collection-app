@@ -14,4 +14,11 @@ describe("external fetch safety", () => {
     expect(new ExternalFetchError("invalid token", 401, false).retryable).toBe(false);
     expect(new ExternalFetchError("rate limited", 429, true).retryable).toBe(true);
   });
+
+  it("counts browser navigations without issuing a fetch", () => {
+    const budget = new FetchBudget(1);
+    budget.consume();
+    expect(budget.used).toBe(1);
+    expect(() => budget.consume()).toThrow(FetchBudgetExceededError);
+  });
 });

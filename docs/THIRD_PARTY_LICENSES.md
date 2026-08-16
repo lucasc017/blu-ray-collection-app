@@ -7,17 +7,17 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | SPDX expression                          | Packages |
 | ---------------------------------------- | -------: |
 | 0BSD                                     |        1 |
-| Apache-2.0                               |       37 |
+| Apache-2.0                               |       39 |
 | Apache-2.0 AND LGPL-3.0-or-later         |        3 |
 | Apache-2.0 AND LGPL-3.0-or-later AND MIT |        1 |
 | BlueOak-1.0.0                            |        4 |
 | BSD-2-Clause                             |        8 |
-| BSD-3-Clause                             |        6 |
+| BSD-3-Clause                             |        7 |
 | CC-BY-4.0                                |        1 |
 | CC0-1.0                                  |        2 |
-| ISC                                      |       14 |
+| ISC                                      |       18 |
 | LGPL-3.0-or-later                        |       10 |
-| MIT                                      |      264 |
+| MIT                                      |      275 |
 | MIT OR Apache-2.0                        |        4 |
 | MIT-0                                    |        2 |
 | MPL-2.0                                  |       12 |
@@ -26,9 +26,10 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 
 | Package                           | Version      | License           |
 | --------------------------------- | ------------ | ----------------- |
+| `@cloudflare/puppeteer`           | 1.3.0        | Apache-2.0        |
 | `@cloudflare/vite-plugin`         | 1.52.1       | MIT               |
 | `@cloudflare/vitest-pool-workers` | 0.21.3       | MIT               |
-| `@cloudflare/workers-types`       | 5.20260815.1 | MIT OR Apache-2.0 |
+| `@cloudflare/workers-types`       | 5.20260816.1 | MIT OR Apache-2.0 |
 | `@eslint/js`                      | 10.0.1       | MIT               |
 | `@testing-library/jest-dom`       | 7.0.1        | MIT               |
 | `@testing-library/react`          | 16.3.2       | MIT               |

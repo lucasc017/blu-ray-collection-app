@@ -71,4 +71,71 @@ describe("public collection API", () => {
     const body = await response.json<{ error: { code: string } }>();
     expect(body.error.code).toBe("unauthorized");
   });
+
+  it("imports a validated owner snapshot without exposing the collection URL", async () => {
+    const response = await SELF.fetch("https://example.com/api/internal/collection-snapshot", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer test-sync-token-abcdefghijklmnopqrstuvwxyz-1234567890",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: 1,
+        pageCount: 1,
+        releases: [
+          {
+            productId: "271695",
+            title: "21 Jump Street 4K (2012)",
+            href: "https://www.blu-ray.com/movies/21-Jump-Street-4K-Blu-ray/271695/",
+            categoryId: "7",
+          },
+        ],
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      status: string;
+      phase: string;
+      counts: { releasesSeen: number; externalFetches: number };
+    }>();
+    expect(body).toMatchObject({
+      status: "running",
+      phase: "resolve",
+      counts: { releasesSeen: 1, externalFetches: 0 },
+    });
+    expect(JSON.stringify(body)).not.toContain("community/collection.php");
+
+    const release = await env.DB.prepare(
+      "SELECT product_id, source_title, active FROM source_releases WHERE product_id = ?",
+    )
+      .bind("271695")
+      .first<{ product_id: string; source_title: string; active: number }>();
+    expect(release).toEqual({
+      product_id: "271695",
+      source_title: "21 Jump Street 4K (2012)",
+      active: 1,
+    });
+  });
+
+  it("rejects invalid or unauthenticated snapshot uploads", async () => {
+    const unauthenticated = await SELF.fetch(
+      "https://example.com/api/internal/collection-snapshot",
+      { method: "POST" },
+    );
+    expect(unauthenticated.status).toBe(401);
+
+    const invalid = await SELF.fetch("https://example.com/api/internal/collection-snapshot", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer test-sync-token-abcdefghijklmnopqrstuvwxyz-1234567890",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ version: 1, pageCount: 1, releases: [] }),
+    });
+    expect(invalid.status).toBe(400);
+    await expect(invalid.json<{ error: { code: string } }>()).resolves.toMatchObject({
+      error: { code: "invalid_snapshot" },
+    });
+  });
 });

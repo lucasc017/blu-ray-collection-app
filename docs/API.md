@@ -12,5 +12,6 @@ All routes are same-origin under `/api`, return JSON, disable caching, and inclu
 ## Internal route
 
 - `POST /internal/sync`: requires `Authorization: Bearer <SYNC_ADMIN_TOKEN>` and performs one bounded sync batch. It returns run identity, phase, cursor, status, and counters. The token is compared in constant time.
+- `POST /internal/collection-snapshot`: requires the same authorization and a bounded JSON manifest produced by `npm run import:collection`. It validates and stores release discovery data without accepting the collection URL or raw HTML.
 
 Errors use `{ "error": { "code", "message", "requestId" } }`. Provider responses, stack traces, and operational details are never returned publicly.

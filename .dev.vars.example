@@ -1,5 +1,6 @@
 # Copy this file to .dev.vars and replace the placeholders locally.
 # Never commit .dev.vars.
-BLURAY_COLLECTION_URL="https://www.blu-ray.com/community/collection.php?u=your-user-id&categoryid=7"
+BLURAY_COLLECTION_URL="https://www.blu-ray.com/community/collection.php?u=your-user-id&sortby=recentlyaddedcollection"
 TMDB_READ_ACCESS_TOKEN="replace-with-your-tmdb-read-access-token"
 SYNC_ADMIN_TOKEN="replace-with-a-long-random-token"
+SYNC_IMPORT_URL="http://localhost:5173/api/internal/collection-snapshot"

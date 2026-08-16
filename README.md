@@ -7,7 +7,7 @@ A public, read-only Blu-ray and 4K UHD collection browser. React and Vite render
 - Node.js 24 LTS and npm 11
 - A Cloudflare account authenticated through Wrangler
 - A TMDB API Read Access Token
-- A private Blu-ray.com collection URL you have permission to read automatically
+- A private Blu-ray.com collection URL and permission to import it with browser automation
 
 ## Local setup
 
@@ -23,27 +23,37 @@ npm run dev
 Edit `.dev.vars` before starting the application:
 
 ```dotenv
-BLURAY_COLLECTION_URL="https://www.blu-ray.com/community/collection.php?u=your-user-id&categoryid=7"
+BLURAY_COLLECTION_URL="https://www.blu-ray.com/community/collection.php?u=your-user-id&sortby=recentlyaddedcollection"
 TMDB_READ_ACCESS_TOKEN="your-read-access-token"
 SYNC_ADMIN_TOKEN="a-long-random-local-token"
+SYNC_IMPORT_URL="http://localhost:5173/api/internal/collection-snapshot"
 ```
 
-None of these values may use a `VITE_` prefix. They are Worker-only bindings and must never enter the browser bundle. The collection URL must use HTTPS on `blu-ray.com` or `www.blu-ray.com`, point to `/community/collection.php`, include a numeric `u` value, and set `categoryid=7`.
+None of these values may use a `VITE_` prefix. They are Worker-only bindings and must never enter the browser bundle. The collection URL must use HTTPS on `blu-ray.com` or `www.blu-ray.com`, point to `/community/collection.php`, and include a numeric `u` value. The importer normalizes it to category 7 sorted by `recentlyaddedcollection`.
 
-The Vite development server serves the SPA and Worker together. The local D1 database is stored under ignored Wrangler state. Trigger one bounded import batch through `POST /api/internal/sync` with the sync token as a Bearer credential; repeat later or use the scheduled test handler if the first import requires more than one batch.
+The Vite development server serves the SPA and Worker together. The local D1 database is stored under ignored Wrangler state. A scheduled or protected manual sync uses Cloudflare Browser Run to scan the newest collection page. It requests the next numbered page only when every release on the current page was absent from D1, and it stops at the first page containing a known release or at the declared last page.
+
+For an authoritative replacement that can detect removals, save every collection page in a normal browser and import the files in page order:
+
+```powershell
+npm run import:collection -- .\snapshots\base.html .\snapshots\page-1.html
+```
+
+The fallback importer verifies the pagination set, extracts only physical-release attributes, and sends a bounded manifest to the protected Worker endpoint. It never uploads the collection URL or raw HTML. Repeat `POST /api/internal/sync` with the sync token, or let Cron continue, until TMDB resolution completes.
 
 ## Common commands
 
-| Command                    | Purpose                                               |
-| -------------------------- | ----------------------------------------------------- |
-| `npm run dev`              | Start the full local application                      |
-| `npm run check`            | Format, lint, type-check, test, build, and scan       |
-| `npm run check:public`     | Run release checks, dependency audit, package dry run |
-| `npm run test:worker`      | Run Workerd and D1 integration tests                  |
-| `npm run cf-typegen`       | Regenerate bindings after Wrangler config changes     |
-| `npm run db:migrate:local` | Apply D1 migrations locally                           |
-| `npm run db:seed:local`    | Add three non-destructive sample entries locally      |
-| `npm run deploy:dry-run`   | Validate the production bundle without deploying      |
+| Command                     | Purpose                                               |
+| --------------------------- | ----------------------------------------------------- |
+| `npm run dev`               | Start the full local application                      |
+| `npm run check`             | Format, lint, type-check, test, build, and scan       |
+| `npm run check:public`      | Run release checks, dependency audit, package dry run |
+| `npm run test:worker`       | Run Workerd and D1 integration tests                  |
+| `npm run cf-typegen`        | Regenerate bindings after Wrangler config changes     |
+| `npm run db:migrate:local`  | Apply D1 migrations locally                           |
+| `npm run db:seed:local`     | Add three non-destructive sample entries locally      |
+| `npm run import:collection` | Import owner-saved collection HTML                    |
+| `npm run deploy:dry-run`    | Validate the production bundle without deploying      |
 
 ## Production deployment
 
@@ -51,7 +61,7 @@ The Vite development server serves the SPA and Worker together. The local D1 dat
 2. Run `npm run db:migrate:remote`.
 3. Set `BLURAY_COLLECTION_URL`, `TMDB_READ_ACCESS_TOKEN`, and `SYNC_ADMIN_TOKEN` using separate interactive `npx wrangler secret put <NAME>` prompts.
 4. Run `npm run check`, then `npm run deploy`.
-5. Trigger a protected sync batch and monitor structured logs with `npx wrangler tail`.
+5. Trigger the protected sync once or wait for its daily slot, then monitor structured logs with `npx wrangler tail`. Use the saved-HTML importer only when an authoritative full replacement is needed.
 
 Do not pass secret values as command-line arguments or commit `.dev.vars`.
 
