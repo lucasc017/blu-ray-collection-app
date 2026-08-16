@@ -25,13 +25,19 @@ export class FetchBudget {
     return this.maximum - this.used;
   }
 
+  consume(count = 1): void {
+    if (!Number.isInteger(count) || count < 1 || this.used + count > this.maximum) {
+      throw new FetchBudgetExceededError();
+    }
+    this.used += count;
+  }
+
   async fetch(
     input: RequestInfo | URL,
     init: RequestInit = {},
     timeoutMs = 10_000,
   ): Promise<Response> {
-    if (this.used >= this.maximum) throw new FetchBudgetExceededError();
-    this.used += 1;
+    this.consume();
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort("External request timed out"), timeoutMs);

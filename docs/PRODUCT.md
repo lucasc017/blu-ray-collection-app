@@ -11,7 +11,8 @@ Give friends a polished, public way to browse the owner’s physical movie and t
 - Sort alphabetically, by release date, or by date added.
 - Open a detail page showing synopsis, artwork, metadata, and the physical releases establishing ownership.
 - Display collection freshness and unresolved metadata count without exposing operational errors.
-- Import the permitted public collection automatically once per Eastern calendar day.
+- Discover newly added physical releases automatically through a bounded browser session, then resume metadata enrichment until complete.
+- Import an owner-saved full collection snapshot through a protected local fallback when removals must be reconciled.
 
 ## Not in V1
 

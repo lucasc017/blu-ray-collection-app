@@ -21,6 +21,7 @@
     "db:migrate:local": "wrangler d1 migrations apply blu-ray-collection-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply blu-ray-collection-db --remote",
     "db:seed:local": "wrangler d1 execute blu-ray-collection-db --local --file ./scripts/seed.local.sql",
+    "import:collection": "node --env-file-if-exists=.dev.vars scripts/import-collection-snapshot.mjs",
     "security:scan": "node scripts/security-scan.mjs",
     "license:check": "node scripts/check-licenses.mjs",
     "licenses:report": "node scripts/generate-license-report.mjs",
@@ -58,9 +59,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/puppeteer": "^1.3.0",
     "@cloudflare/vite-plugin": "^1.52.1",
     "@cloudflare/vitest-pool-workers": "^0.21.3",
-    "@cloudflare/workers-types": "^5.20260815.1",
+    "@cloudflare/workers-types": "^5.20260816.1",
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
@@ -85,5 +87,10 @@
   "allowScripts": {
     "esbuild@0.28.1": true,
     "workerd@1.20260811.1": true
+  },
+  "overrides": {
+    "@cloudflare/puppeteer": {
+      "@puppeteer/browsers": "3.0.4"
+    }
   }
 }

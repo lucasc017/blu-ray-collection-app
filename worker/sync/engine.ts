@@ -1,18 +1,20 @@
 import type { SyncBatchResult } from "../../shared/contracts";
 import { validateSyncConfiguration } from "../config";
 import { logEvent } from "../logging";
-import { fetchCollection } from "./bluray-client";
+import { fetchRecentlyAddedCollection } from "./bluray-client";
 import { ExternalFetchError, FetchBudget, FetchBudgetExceededError } from "./fetch-budget";
 import { releaseOverrides } from "./overrides";
 import { SyncRepository } from "./repository";
 import { getEasternSlot, randomDailySlot } from "./schedule";
 import { TmdbClient } from "./tmdb-client";
-import type { SyncRunRow, TitleMetadata } from "./types";
+import type { ParsedRelease, SyncRunRow, TitleMetadata } from "./types";
 
 export interface RunSyncOptions {
   triggerType: "scheduled" | "manual";
   force: boolean;
   now: Date;
+  discoverySnapshot?: ParsedRelease[];
+  stopAfterDiscovery?: boolean;
 }
 
 const emptyCounts = {
@@ -51,6 +53,10 @@ export async function runSyncBatch(env: Env, options: RunSyncOptions): Promise<S
   const eastern = getEasternSlot(options.now);
   let run = await repository.getActiveRun();
   let localDate = run?.local_date ?? eastern.localDate;
+
+  if (run && options.discoverySnapshot && run.phase !== "discover") {
+    return resultFromRun(run, "busy");
+  }
 
   if (!run) {
     await repository.ensureDay(localDate, randomDailySlot(), options.now);
@@ -95,9 +101,22 @@ export async function runSyncBatch(env: Env, options: RunSyncOptions): Promise<S
   try {
     while (true) {
       if (run.phase === "discover") {
-        const releases = await fetchCollection(configuration.collectionUrl, budget);
-        await repository.saveDiscovery(run.id, releases, options.now);
+        if (options.discoverySnapshot) {
+          await repository.saveDiscovery(run.id, options.discoverySnapshot, options.now);
+        } else {
+          const releases = await fetchRecentlyAddedCollection(
+            configuration.collectionUrl,
+            env.BROWSER,
+            budget,
+            (productIds) => repository.findExistingProductIds(productIds),
+          );
+          await repository.saveIncrementalDiscovery(run.id, releases, options.now);
+        }
         run = (await repository.getRun(run.id)) ?? run;
+        if (options.stopAfterDiscovery) {
+          await repository.releaseLease(localDate, leaseToken, options.now);
+          return resultFromRun(run, "running");
+        }
         continue;
       }
 

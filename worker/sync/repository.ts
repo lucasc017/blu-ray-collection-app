@@ -93,8 +93,11 @@ export class SyncRepository {
     return run;
   }
 
-  async saveDiscovery(runId: string, releases: ParsedRelease[], now: Date): Promise<void> {
-    const timestamp = nowIso(now);
+  private async upsertDiscoveryReleases(
+    runId: string,
+    releases: ParsedRelease[],
+    timestamp: string,
+  ): Promise<void> {
     const statements = releases.map((release) =>
       this.db
         .prepare(
@@ -139,6 +142,41 @@ export class SyncRepository {
     for (let start = 0; start < statements.length; start += 75) {
       await this.db.batch(statements.slice(start, start + 75));
     }
+  }
+
+  async findExistingProductIds(productIds: string[]): Promise<ReadonlySet<string>> {
+    const existing = new Set<string>();
+    for (let start = 0; start < productIds.length; start += 75) {
+      const chunk = productIds.slice(start, start + 75);
+      const placeholders = chunk.map(() => "?").join(", ");
+      const result = await this.db
+        .prepare(`SELECT product_id FROM source_releases WHERE product_id IN (${placeholders})`)
+        .bind(...chunk)
+        .all<{ product_id: string }>();
+      for (const row of result.results) existing.add(row.product_id);
+    }
+    return existing;
+  }
+
+  async saveIncrementalDiscovery(
+    runId: string,
+    releases: ParsedRelease[],
+    now: Date,
+  ): Promise<void> {
+    const timestamp = nowIso(now);
+    await this.upsertDiscoveryReleases(runId, releases, timestamp);
+    await this.db
+      .prepare(
+        `UPDATE sync_runs SET phase = 'resolve', cursor = NULL, releases_seen = ?, updated_at = ?
+        WHERE id = ?`,
+      )
+      .bind(releases.length, timestamp, runId)
+      .run();
+  }
+
+  async saveDiscovery(runId: string, releases: ParsedRelease[], now: Date): Promise<void> {
+    const timestamp = nowIso(now);
+    await this.upsertDiscoveryReleases(runId, releases, timestamp);
     await this.db.batch([
       this.db
         .prepare(

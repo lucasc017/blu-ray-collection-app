@@ -21,3 +21,11 @@ The configured Blu-ray.com collection URL is treated as a secret because its num
 identify the owner's public collection. It is never sent to browsers. TMDB and sync tokens remain
 Worker-only bindings. Operational logs must contain event names, counts, phases, and request IDs—not
 secret values, authorization headers, or full private source URLs.
+
+During discovery, the secret collection URL is sent only from the Worker-controlled Cloudflare
+Browser Run session to Blu-ray.com. The application extracts bounded public release metadata and
+does not store collection HTML, browser recordings, source credentials, or cookies.
+
+The owner-assisted importer processes saved HTML locally and uploads only validated release IDs,
+labels, category markers, and public release-page links. Raw collection HTML and the configured
+collection URL are not uploaded or stored.

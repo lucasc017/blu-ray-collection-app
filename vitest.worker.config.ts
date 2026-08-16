@@ -7,6 +7,9 @@ export default defineConfig({
     cloudflareTest(async () => ({
       wrangler: { configPath: "./wrangler.jsonc" },
       miniflare: {
+        // Keep unit/integration tests local; live Browser Run behavior is covered
+        // by the explicit hosted smoke test rather than every Workerd test run.
+        browserRendering: { binding: "BROWSER" },
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")),
           BLURAY_COLLECTION_URL:
