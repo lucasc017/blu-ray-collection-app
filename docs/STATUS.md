@@ -19,12 +19,20 @@ Last updated: 2026-08-16
 - MIT project license, dependency-license review, public-safety scans, npm audit gate, pinned CI actions, and Dependabot configuration.
 - Public security, privacy, deployment, and clean-repository release guidance for open-source publication.
 - Clean public GitHub source history designed to begin with one reviewed root commit.
+- Production Worker deployed at `https://blu-ray-collection-app.blu-ray-collection-app.workers.dev`
+  with the D1, Browser Run, static-assets, observability, and 15-minute Cron bindings active.
+- Three required production secrets installed as hidden Worker bindings; local-only
+  `SYNC_IMPORT_URL` is not a production binding.
+- Initial production Browser Run import completed across six bounded invocations: 106 active source
+  releases, 87 resolved releases, 19 unresolved issues, and 113 public title entries.
+- Production homepage, public status/list APIs, security headers, structured completion logs,
+  deployment/version metadata, and a private post-import D1 export verified.
+- Canonical production runbook and AI development/deployment guidance added for repeatable future
+  sessions.
 
-## Remaining deployment work
+## Remaining operational work
 
-- Set production secrets and deploy.
-- Run the first deployed Browser Run import and verify the empty-database crawl reaches its declared last page.
-- Review actual unresolved mappings and add verified product-ID overrides where appropriate.
-- Observe a completed scheduled run on `workers.dev` and record measured CPU/fetch behavior.
+- Review the 19 initial unresolved mappings and add verified product-ID overrides where appropriate.
+- Observe a completed Cron-initiated daily run on `workers.dev` and record measured CPU/fetch behavior.
 - Keep GitHub secret scanning, push protection, CodeQL, Dependabot, private vulnerability reporting, CI, and protected-branch settings enabled.
 - Obtain explicit owner approval before future pushes, deployments, or repository-setting changes.

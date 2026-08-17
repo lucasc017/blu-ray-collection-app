@@ -13,3 +13,8 @@ CI pins third-party actions to reviewed commit SHAs, checks the complete Git his
 uses only synthetic configuration, and never receives deployment secrets. Run
 `npm run licenses:report` whenever `package-lock.json` changes and review any newly introduced license
 before adding it to the allowlist.
+
+Before an authorized production deployment, additionally run `npm run cf-typegen:check`,
+`npm run deploy:dry-run`, and `npx wrangler check startup`, then remove the ignored CPU profile that
+the startup check creates. Follow `docs/DEPLOYMENT.md` for remote migration inspection, public smoke
+tests, bounded log observation, and post-deploy verification. CI passing never authorizes deployment.

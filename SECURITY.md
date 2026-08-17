@@ -28,3 +28,10 @@ rotate it immediately and inspect Git history, CI artifacts, logs, and deploymen
 The public API exposes collection metadata only. Blu-ray.com credentials are neither required nor
 stored. The internal sync route remains protected by a long secret Bearer token and returns no sync
 details to unauthorized callers.
+
+Production D1 exports and locally saved collection HTML are private operational data even though
+individual release metadata is publicly browseable. Store them outside the repository and never
+attach them to issues, pull requests, CI artifacts, or releases. Treat generated
+`dist/blu_ray_collection_app/.dev.vars` as sensitive build output; do not inspect or copy it, and
+verify Wrangler excludes it from deployment uploads. Follow `docs/DEPLOYMENT.md` for rotation,
+backup, rollback, and incident procedures.
