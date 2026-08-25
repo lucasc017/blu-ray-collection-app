@@ -152,3 +152,6 @@ vite.config.ts.timestamp-*
 # Generated Cloudflare binding declarations
 worker-configuration.d.ts
 *.cpuprofile
+
+# Generated Graphify knowledge graph and local memory
+graphify-out/
