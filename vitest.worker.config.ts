@@ -17,6 +17,8 @@ export default defineConfig({
           TMDB_READ_ACCESS_TOKEN:
             "test-tmdb-read-token-abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789",
           SYNC_ADMIN_TOKEN: "test-sync-token-abcdefghijklmnopqrstuvwxyz-1234567890",
+          ACCESS_TEAM_DOMAIN: "https://test-team.cloudflareaccess.com",
+          ACCESS_AUD: "test-access-audience-abcdefghijklmnopqrstuvwxyz-1234567890",
         },
       },
     })),

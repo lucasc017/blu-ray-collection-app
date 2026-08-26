@@ -32,8 +32,10 @@ repository without replacing the binding instructions in the root or nested `AGE
 ## Architectural invariants
 
 - One Cloudflare Worker serves the SPA and `/api/*`.
-- Visitor requests read D1 only. Blu-ray.com and TMDB calls occur only in Cron or authenticated
+- Signed-in user requests read D1 only. Blu-ray.com and TMDB calls occur only in Cron or authenticated
   operator flows.
+- Cloudflare Access owns the exact-email allowlist. The Worker validates every API assertion and
+  separates user principals from service-token principals; D1 `app_users` rows never grant access.
 - D1 owns durable state, leases, cursors, issues, and cached metadata. Do not rely on module memory.
 - Discovery is bounded and conservative. Incremental discovery never deactivates unseen releases;
   only a validated complete snapshot can reconcile removals.
@@ -60,13 +62,14 @@ and preserve the intended guardrail.
 ## Production boundaries
 
 Production currently uses Worker `blu-ray-collection-app`, D1 database `blu-ray-collection-db`, a
-Browser Run binding, and a 15-minute Cron trigger. The public URL and complete operating procedure
+Browser Run binding, and a 15-minute Cron trigger. The production URL and complete operating procedure
 are in `docs/DEPLOYMENT.md`; discover the active version at runtime with Wrangler rather than copying
 a version ID from old notes.
 
 Read-only inspection is safe when relevant. The following actions require explicit human approval in
 the current task: deploy, remote migration, secret creation/update/deletion, production import,
-production export, rollback, route/domain change, D1 mutation, push, PR creation, or repository
+production export, Access identity-provider/application/policy/service-token change, rollback,
+route/domain change, D1 mutation, push, PR creation, or repository
 settings changes. One approval does not imply another.
 
 When deployment is authorized:

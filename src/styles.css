@@ -86,6 +86,19 @@ button:disabled {
   flex-direction: column;
 }
 
+.session-shell {
+  width: min(720px, calc(100vw - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  display: grid;
+  align-items: center;
+}
+
+.session-shell .state-panel h1 {
+  font-size: clamp(2rem, 7vw, 4rem);
+  letter-spacing: -0.05em;
+}
+
 .site-header {
   width: var(--content);
   min-height: 88px;

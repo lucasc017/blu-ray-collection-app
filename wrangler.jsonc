@@ -5,6 +5,7 @@
   "compatibility_date": "2026-08-15",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "preview_urls": false,
   "vars": {
     "TMDB_API_BASE_URL": "https://api.themoviedb.org/3",
     "TMDB_IMAGE_BASE_URL": "https://image.tmdb.org/t/p",
@@ -12,7 +13,13 @@
     "SYNC_MAX_EXTERNAL_FETCHES": "40",
   },
   "secrets": {
-    "required": ["BLURAY_COLLECTION_URL", "TMDB_READ_ACCESS_TOKEN", "SYNC_ADMIN_TOKEN"],
+    "required": [
+      "ACCESS_AUD",
+      "ACCESS_TEAM_DOMAIN",
+      "BLURAY_COLLECTION_URL",
+      "TMDB_READ_ACCESS_TOKEN",
+      "SYNC_ADMIN_TOKEN",
+    ],
   },
   "d1_databases": [
     {

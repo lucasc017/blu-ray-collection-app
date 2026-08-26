@@ -33,5 +33,5 @@ approval for that action.
 - Approve any repository name, ownership, or visibility change separately.
 - Approve each commit/push or release action requested from an automated agent.
 - Keep Cloudflare secrets and deployment authorization separate from source publication.
-- After publication, search the public repository and release artifacts for the three binding names,
+- After publication, search the public repository and release artifacts for the five Worker binding names,
   numeric collection URLs, personal contact data, and token-like strings; rotate any exposed value.

@@ -8,20 +8,23 @@ Workers; GitHub Actions validates changes but has no deployment credentials and 
 | Resource             | Value                                                                |
 | -------------------- | -------------------------------------------------------------------- |
 | Worker               | `blu-ray-collection-app`                                             |
-| Public URL           | `https://blu-ray-collection-app.blu-ray-collection-app.workers.dev`  |
+| Access-protected URL | `https://blu-ray-collection-app.blu-ray-collection-app.workers.dev`  |
 | D1 database          | `blu-ray-collection-db` through binding `DB`                         |
 | Browser automation   | Cloudflare Browser Run through binding `BROWSER`                     |
 | Schedule             | Cron every 15 minutes; D1 selects at most one daily Eastern-time run |
 | Configuration source | `wrangler.jsonc` plus generated `worker-configuration.d.ts`          |
 
-The three production secrets are `BLURAY_COLLECTION_URL`, `TMDB_READ_ACCESS_TOKEN`, and
-`SYNC_ADMIN_TOKEN`. Their names are public configuration; their values are not. `SYNC_IMPORT_URL` is
-local tooling configuration and must not be uploaded as a Worker secret.
+The five required Worker secret bindings are `ACCESS_AUD`, `ACCESS_TEAM_DOMAIN`,
+`BLURAY_COLLECTION_URL`, `TMDB_READ_ACCESS_TOKEN`, and `SYNC_ADMIN_TOKEN`. The Access audience and
+team domain are configuration rather than credentials, but hidden bindings keep environment-specific
+identity settings out of source. `SYNC_IMPORT_URL`, `CF_ACCESS_CLIENT_ID`, and
+`CF_ACCESS_CLIENT_SECRET` are local importer configuration and must not be uploaded as Worker secrets.
 
 ## Authorization and safety gates
 
 Deploying, applying remote migrations, changing secrets, starting a production import, exporting
-production data, or rolling back changes external state. A human owner must explicitly authorize
+production data, changing Access applications/policies/service tokens, or rolling back changes
+external state. A human owner must explicitly authorize
 the exact action in the current task before a person or AI agent performs it.
 
 Before any production mutation:
@@ -73,26 +76,57 @@ These steps are provisioning steps, not routine releases:
    npm run db:migrate:remote
    ```
 
-4. Create a temporary `.env` or JSON secrets file **outside the repository** containing only the
-   three required production secrets. Populate it through a secure editor or secret store; do not
+4. Complete the Cloudflare Access provisioning section below and obtain the team domain and
+   application audience tag.
+5. Create a temporary `.env` or JSON secrets file **outside the repository** containing only the
+   five required Worker bindings. Populate it through a secure editor or secret store; do not
    construct it with `echo` or include values in shell history.
-5. Build and perform the initial upload with the secrets attached:
+6. Build and perform the initial upload with the bindings attached:
 
    ```powershell
    npm run build
    npx wrangler deploy --strict --secrets-file "<temporary-secret-file>" --tag initial-production --message "Initial production deployment"
    ```
 
-6. Delete the temporary secrets file in a `finally`/cleanup step even if deployment fails. For an AI
+7. Delete the temporary secrets file in a `finally`/cleanup step even if deployment fails. For an AI
    session, use a subprocess that loads local environment variables without printing them, writes
-   only the three required keys to an operating-system temporary directory, invokes Wrangler with
+   only the five required keys to an operating-system temporary directory, invokes Wrangler with
    `shell: false`, and removes the directory before returning.
-7. Confirm `npx wrangler secret list` reports the three expected names. This command does not reveal
+8. Confirm `npx wrangler secret list` reports the five expected names. This command does not reveal
    their values.
 
 The first `workers.dev` hostname may resolve before its TLS certificate is ready. A handshake error
 immediately after a successful first deployment can be transient; wait briefly and retry before
 changing configuration.
+
+## One-time Cloudflare Access provisioning
+
+This is an owner-administered security boundary. Do not automate or perform it without distinct
+authorization for the Cloudflare changes.
+
+1. In Cloudflare Zero Trust, add **Google** as the identity provider. Use the standard Google
+   integration, which supports consumer Google accounts without requiring Google Workspace. Do not
+   enable one-time PIN or another login method for this application.
+2. Create a self-hosted Access application covering the entire production hostname, with no public
+   path bypass. Set its application session duration to **7 days**.
+3. Add a user policy with Action **Allow**, Include selector **Emails**, and one exact email value
+   per approved person. Require Login Method **Google**. Never use `Everyone`, `Emails ending in`, or
+   a domain wildcard for this allowlist. Access is deny-by-default for every identity not listed.
+4. Ensure only the owner retains Cloudflare account permissions capable of editing Access policies,
+   identity providers, or service tokens. There is intentionally no application admin screen.
+5. Create one dedicated service token for the owner snapshot importer. Add a separate policy with
+   Action **Service Auth**, Include selector **Service Token**, and that exact token. Store its Client
+   ID and Client Secret locally as `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`.
+6. Copy the Access team domain as its full HTTPS origin (for example,
+   `https://your-team-name.cloudflareaccess.com`) and this application's audience (`AUD`) tag into
+   the Worker bindings `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`. The Worker validates signature, issuer,
+   audience, expiry, token type, and user/service claim shape for defense in depth.
+7. Confirm `preview_urls` remains `false` in `wrangler.jsonc`; otherwise an unprotected versioned
+   `workers.dev` hostname could bypass the intended application boundary.
+
+Changing the exact-email list, the seven-day session, Google login method, or service token is a
+separate production operation. Review the resulting policy before saving and test both an approved
+and an unapproved Google account.
 
 ## Routine production deployment
 
@@ -127,22 +161,23 @@ changing configuration.
 
 ## Smoke test
 
-After deployment, verify the public surface before starting an import:
+After deployment, verify the protected surface before starting an import. Use an ordinary private
+browser window for interactive checks; do not paste Access cookies or JWTs into the terminal:
 
 ```powershell
-$productionUrl = "https://blu-ray-collection-app.blu-ray-collection-app.workers.dev"
-Invoke-WebRequest $productionUrl -Method Head
-Invoke-RestMethod "$productionUrl/api/status"
-Invoke-RestMethod "$productionUrl/api/titles?page=1&pageSize=1"
 npx wrangler secret list
 npx wrangler deployments list
 ```
 
 Expected results:
 
-- `/` returns HTML with the configured security headers.
-- `/api/status` and `/api/titles` return JSON and HTTP 200.
-- The internal sync route returns 401 when called without authorization.
+- An anonymous private-browser request is redirected to or blocked by Cloudflare Access before any
+  collection HTML or JSON is returned.
+- An approved Google account can load `/`, `/api/status`, and `/api/titles`; React finishes the
+  session bootstrap and the header contains **Sign out**.
+- A Google account absent from the exact-email list is denied.
+- The dedicated service token passes Access only for machine requests; the Worker still rejects an
+  internal request that lacks the independent sync token.
 - The secret list contains exactly the required secret names; no values are printed.
 - Deployment output lists `DB`, `BROWSER`, the public variables, the `workers.dev` URL, and the
   `*/15 * * * *` trigger.
@@ -159,9 +194,11 @@ while the response is HTTP 200 with `status: "running"`; stop on `complete`, `fa
 non-2xx response. Report only HTTP status, phase, status, and aggregate counters. Do not print the
 Bearer token, source URL, cursor, raw response errors, or authorization header.
 
-An AI agent may load `SYNC_ADMIN_TOKEN` into a child process with Node's `--env-file=.dev.vars`
-option without reading or displaying the file. The child process should call the fixed public URL,
-set the header in memory, emit only the safe aggregate fields, and cap the loop at 12 invocations.
+An AI agent may load `SYNC_ADMIN_TOKEN`, `CF_ACCESS_CLIENT_ID`, and
+`CF_ACCESS_CLIENT_SECRET` into a child process with Node's `--env-file=.dev.vars` option without
+reading or displaying the file. The child process should call the fixed protected URL, set all three
+authorization headers in memory, emit only the safe aggregate fields, and cap the loop at 12
+invocations.
 Starting this loop requires explicit production-import authorization.
 
 After completion, verify:
@@ -201,3 +238,7 @@ the compromised value into an issue or incident document.
 - [Cloudflare D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/)
 - [Cloudflare Workers versions and deployments](https://developers.cloudflare.com/workers/versions-and-deployments/)
 - [Cloudflare Workers rollbacks](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/)
+- [Cloudflare Access Google identity provider](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/google/)
+- [Cloudflare Access policies](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/)
+- [Cloudflare Access JWT validation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)
+- [Cloudflare Access service tokens](https://developers.cloudflare.com/cloudflare-one/identity/service-tokens/)

@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-08-16
+Last updated: 2026-08-25
 
 ## Implemented
 
@@ -30,8 +30,33 @@ Last updated: 2026-08-16
 - Canonical production runbook and AI development/deployment guidance added for repeatable future
   sessions.
 
+## Implemented locally, pending production rollout
+
+- Cloudflare Access JWT verification using rotating JWKS with issuer, audience, signature, expiry,
+  token-type, and claim-shape validation.
+- Strict principal separation: Google users can access collection/session routes; Access service
+  tokens can access only internal routes, which retain the independent sync-token check.
+- Exact HTTP loopback development identity and fail-closed behavior for every other missing or
+  invalid Access assertion.
+- Forward migration `0002_access_users.sql`, idempotent `PUT /api/session`, and minimal D1 user
+  records for future server-side attribution.
+- React session bootstrap with accessible loading/error states, expired-session re-entry, Access
+  sign-out, and `X-Requested-With` on API requests.
+- Remote snapshot importer support for a dedicated Access service token; local HTTP imports remain
+  credential-free at the Access layer.
+- Versioned Worker preview URLs disabled and the Google exact-email/7-day-session deployment runbook
+  documented.
+
+No Cloudflare Access application, policy, identity provider, service token, Worker secret, remote D1
+migration, or deployment was changed by this implementation task. The live application remains on
+the previously deployed public version until those production actions are separately authorized.
+
 ## Remaining operational work
 
+- Authorize and configure the Google identity provider, whole-host self-hosted Access application,
+  owner-managed exact-email Allow policy, seven-day session, and importer Service Auth policy.
+- Install `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`, apply migration `0002`, deploy the validated build,
+  and run approved/disallowed-user plus service-token smoke tests as distinct authorized operations.
 - Review the 19 initial unresolved mappings and add verified product-ID overrides where appropriate.
 - Observe a completed Cron-initiated daily run on `workers.dev` and record measured CPU/fetch behavior.
 - Keep GitHub secret scanning, push protection, CodeQL, Dependabot, private vulnerability reporting, CI, and protected-branch settings enabled.

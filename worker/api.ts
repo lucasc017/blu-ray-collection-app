@@ -1,14 +1,25 @@
 import { Hono, type Context } from "hono";
 import { z } from "zod";
 import type { ApiErrorBody, MediaType } from "../shared/contracts";
+import {
+  AccessAuthenticationError,
+  authenticateRequest,
+  mayUseInternalRoutes,
+  type AccessPrincipal,
+  userIdentity,
+} from "./auth";
 import { isUsableSecret, validateSyncConfiguration } from "./config";
 import { getSyncStatus, getTitleDetails, listTitles } from "./db/public-queries";
+import { upsertAppUser } from "./db/users";
 import { logEvent } from "./logging";
 import { applyApiSecurityHeaders } from "./security-headers";
 import { runSyncBatch } from "./sync/engine";
 import { InvalidCollectionSnapshotError, parseCollectionSnapshot } from "./sync/snapshot";
 
-type AppBindings = { Bindings: Env; Variables: { requestId: string } };
+type AppBindings = {
+  Bindings: Env;
+  Variables: { principal: AccessPrincipal; requestId: string };
+};
 type AppContext = Context<AppBindings>;
 
 const listQuerySchema = z.object({
@@ -31,14 +42,20 @@ function errorBody(code: string, message: string, requestId: string): ApiErrorBo
   return { error: { code, message, requestId } };
 }
 
-function authorized(request: Request, secret: string): boolean {
-  if (!isUsableSecret(secret, 32)) return false;
+async function authorized(request: Request, secret: string): Promise<boolean> {
   const header = request.headers.get("Authorization");
-  if (!header?.startsWith("Bearer ")) return false;
-  const supplied = new TextEncoder().encode(header.slice(7));
-  const expected = new TextEncoder().encode(secret);
-  if (supplied.byteLength !== expected.byteLength) return false;
-  return crypto.subtle.timingSafeEqual(supplied, expected);
+  const hasBearerToken = header?.startsWith("Bearer ") ?? false;
+  const supplied = new TextEncoder().encode(hasBearerToken && header ? header.slice(7) : "");
+  const expected = new TextEncoder().encode(secret ?? "");
+  const [suppliedDigest, expectedDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", supplied),
+    crypto.subtle.digest("SHA-256", expected),
+  ]);
+  return Boolean(
+    hasBearerToken &&
+    isUsableSecret(secret, 32) &&
+    crypto.subtle.timingSafeEqual(suppliedDigest, expectedDigest),
+  );
 }
 
 async function readBodyBounded(request: Request, maximumBytes: number): Promise<string> {
@@ -85,8 +102,39 @@ api.use("*", async (c, next) => {
   c.header("X-Request-Id", requestId);
   c.header("Cache-Control", "no-store");
   applyApiSecurityHeaders(c.res.headers);
+
+  let principal: AccessPrincipal;
+  try {
+    principal = await authenticateRequest(c.req.raw, c.env);
+  } catch (error) {
+    if (!(error instanceof AccessAuthenticationError)) throw error;
+    return c.json(
+      errorBody("unauthorized", "A valid sign-in is required.", c.get("requestId")),
+      401,
+    );
+  }
+
+  const isInternalRoute = new URL(c.req.url).pathname.startsWith("/api/internal/");
+  const allowed = isInternalRoute
+    ? mayUseInternalRoutes(principal)
+    : userIdentity(principal) !== null;
+  if (!allowed) {
+    return c.json(
+      errorBody("forbidden", "This identity cannot use that route.", c.get("requestId")),
+      403,
+    );
+  }
+  c.set("principal", principal);
   await next();
   applyApiSecurityHeaders(c.res.headers);
+});
+
+api.put("/session", async (c) => {
+  const identity = userIdentity(c.get("principal"));
+  if (!identity) {
+    return c.json(errorBody("forbidden", "A signed-in user is required.", c.get("requestId")), 403);
+  }
+  return c.json(await upsertAppUser(c.env.DB, identity, new Date().toISOString()));
 });
 
 api.get("/titles", async (c) => {
@@ -123,7 +171,7 @@ api.get("/titles/tv/:tmdbId/season/:seasonNumber", async (c) => {
 api.get("/status", async (c) => c.json(await getSyncStatus(c.env.DB)));
 
 api.post("/internal/sync", async (c) => {
-  if (!authorized(c.req.raw, c.env.SYNC_ADMIN_TOKEN)) {
+  if (!(await authorized(c.req.raw, c.env.SYNC_ADMIN_TOKEN))) {
     return c.json(
       errorBody("unauthorized", "A valid sync token is required.", c.get("requestId")),
       401,
@@ -133,7 +181,7 @@ api.post("/internal/sync", async (c) => {
 });
 
 api.post("/internal/collection-snapshot", async (c) => {
-  if (!authorized(c.req.raw, c.env.SYNC_ADMIN_TOKEN)) {
+  if (!(await authorized(c.req.raw, c.env.SYNC_ADMIN_TOKEN))) {
     return c.json(
       errorBody("unauthorized", "A valid sync token is required.", c.get("requestId")),
       401,

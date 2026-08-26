@@ -20,17 +20,19 @@ safe-harbor program is currently offered.
 
 ## Secret handling
 
-Never commit or share the private collection URL, TMDB tokens, sync admin tokens, Cloudflare
-credentials, `.dev.vars`, or copied authorization headers. Production values belong in encrypted
+Never commit or share the private collection URL, TMDB tokens, sync admin tokens, Cloudflare Access
+service-token credentials, `.dev.vars`, or copied authorization headers/JWTs. Production values belong in encrypted
 Cloudflare Worker secrets; local values belong only in ignored `.dev.vars`. If a secret is exposed,
 rotate it immediately and inspect Git history, CI artifacts, logs, and deployments before release.
 
-The public API exposes collection metadata only. Blu-ray.com credentials are neither required nor
-stored. The internal sync route remains protected by a long secret Bearer token and returns no sync
-details to unauthorized callers.
+Cloudflare Access protects the entire production hostname with Google sign-in and an owner-managed
+exact-email allowlist. The Worker additionally validates Access JWT signatures and claims on every
+API request and keeps user principals out of internal routes. Blu-ray.com credentials are neither
+required nor stored. Internal routes require an Access service token plus a long independent Bearer
+token and return no sync details to unauthorized callers.
 
 Production D1 exports and locally saved collection HTML are private operational data even though
-individual release metadata is publicly browseable. Store them outside the repository and never
+individual release metadata originates on public provider pages. Store them outside the repository and never
 attach them to issues, pull requests, CI artifacts, or releases. Treat generated
 `dist/blu_ray_collection_app/.dev.vars` as sensitive build output; do not inspect or copy it, and
 verify Wrangler excludes it from deployment uploads. Follow `docs/DEPLOYMENT.md` for rotation,
