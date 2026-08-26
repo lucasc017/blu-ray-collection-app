@@ -2,7 +2,7 @@ import { SELF } from "cloudflare:test";
 import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it } from "vitest";
 
-describe("public collection API", () => {
+describe("authenticated collection API", () => {
   beforeEach(async () => {
     const now = "2026-08-15T12:00:00.000Z";
     await env.DB.batch([
@@ -37,7 +37,7 @@ describe("public collection API", () => {
   });
 
   it("lists and retrieves owned titles", async () => {
-    const listResponse = await SELF.fetch("https://example.com/api/titles?q=Matrix");
+    const listResponse = await SELF.fetch("http://localhost/api/titles?q=Matrix");
     expect(listResponse.status).toBe(200);
     expect(listResponse.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(listResponse.headers.get("Content-Security-Policy")).toContain("default-src 'none'");
@@ -45,7 +45,7 @@ describe("public collection API", () => {
     expect(list.total).toBe(1);
     expect(list.items[0]?.title).toBe("The Matrix");
 
-    const detailResponse = await SELF.fetch("https://example.com/api/titles/movie/603");
+    const detailResponse = await SELF.fetch("http://localhost/api/titles/movie/603");
     expect(detailResponse.status).toBe(200);
     const detail = await detailResponse.json<{
       releases: Array<{ format: string; sourceUrl: string }>;
@@ -60,20 +60,53 @@ describe("public collection API", () => {
     await env.DB.prepare(
       "UPDATE source_releases SET source_url = 'javascript:alert(1)' WHERE product_id = '307056'",
     ).run();
-    const response = await SELF.fetch("https://example.com/api/titles/movie/603");
+    const response = await SELF.fetch("http://localhost/api/titles/movie/603");
     const detail = await response.json<{ releases: unknown[] }>();
     expect(detail.releases).toEqual([]);
   });
 
+  it("creates and refreshes the local development user idempotently", async () => {
+    const firstResponse = await SELF.fetch("http://localhost/api/session", { method: "PUT" });
+    expect(firstResponse.status).toBe(200);
+    const first = await firstResponse.json<{
+      id: number;
+      email: string;
+      createdAt: string;
+      lastSeenAt: string;
+    }>();
+    expect(first).toMatchObject({ email: "developer@localhost.invalid" });
+
+    const secondResponse = await SELF.fetch("http://127.0.0.1/api/session", { method: "PUT" });
+    const second = await secondResponse.json<typeof first>();
+    expect(second.id).toBe(first.id);
+    expect(second.createdAt).toBe(first.createdAt);
+    expect(Date.parse(second.lastSeenAt)).toBeGreaterThanOrEqual(Date.parse(first.lastSeenAt));
+
+    const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM app_users").first<number>(
+      "count",
+    );
+    expect(count).toBe(1);
+  });
+
+  it("fails closed outside the exact local development origins", async () => {
+    const response = await SELF.fetch("https://example.com/api/titles");
+    expect(response.status).toBe(401);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    await expect(response.json<{ error: { code: string } }>()).resolves.toMatchObject({
+      error: { code: "unauthorized" },
+    });
+  });
+
   it("does not disclose the protected sync endpoint", async () => {
-    const response = await SELF.fetch("https://example.com/api/internal/sync", { method: "POST" });
+    const response = await SELF.fetch("http://localhost/api/internal/sync", { method: "POST" });
     expect(response.status).toBe(401);
     const body = await response.json<{ error: { code: string } }>();
     expect(body.error.code).toBe("unauthorized");
   });
 
   it("imports a validated owner snapshot without exposing the collection URL", async () => {
-    const response = await SELF.fetch("https://example.com/api/internal/collection-snapshot", {
+    const response = await SELF.fetch("http://localhost/api/internal/collection-snapshot", {
       method: "POST",
       headers: {
         Authorization: "Bearer test-sync-token-abcdefghijklmnopqrstuvwxyz-1234567890",
@@ -119,13 +152,12 @@ describe("public collection API", () => {
   });
 
   it("rejects invalid or unauthenticated snapshot uploads", async () => {
-    const unauthenticated = await SELF.fetch(
-      "https://example.com/api/internal/collection-snapshot",
-      { method: "POST" },
-    );
+    const unauthenticated = await SELF.fetch("http://localhost/api/internal/collection-snapshot", {
+      method: "POST",
+    });
     expect(unauthenticated.status).toBe(401);
 
-    const invalid = await SELF.fetch("https://example.com/api/internal/collection-snapshot", {
+    const invalid = await SELF.fetch("http://localhost/api/internal/collection-snapshot", {
       method: "POST",
       headers: {
         Authorization: "Bearer test-sync-token-abcdefghijklmnopqrstuvwxyz-1234567890",

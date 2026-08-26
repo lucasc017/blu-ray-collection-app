@@ -4,8 +4,8 @@ export function AboutPage() {
       <p className="eyebrow">About this shelf</p>
       <h1>A small home for a carefully collected library.</h1>
       <p className="lede">
-        The Disc Shelf is a public, read-only way for friends to browse a personal collection of
-        movies and television seasons on Blu-ray and 4K UHD.
+        The Disc Shelf is a private, read-only way for approved friends to browse a personal
+        collection of movies and television seasons on Blu-ray and 4K UHD.
       </p>
 
       <section>
@@ -28,10 +28,12 @@ export function AboutPage() {
       <section>
         <h2>Privacy</h2>
         <p>
-          There are no visitor accounts, comments, suggestions, or personal viewing histories in
-          this version. The site does not use analytics or advertising cookies. Poster and backdrop
-          images are loaded from TMDB&apos;s image service, so that service receives ordinary
-          network request information such as your IP address and browser headers.
+          Google sign-in and the owner&apos;s exact-email allowlist are managed by Cloudflare
+          Access; this application never handles passwords. It stores your email and Access identity
+          with account timestamps, but has no comments, suggestions, personal viewing history,
+          analytics, or advertising cookies. Poster and backdrop images are loaded from TMDB&apos;s
+          image service, so that service receives ordinary network request information such as your
+          IP address and browser headers.
         </p>
       </section>
     </article>

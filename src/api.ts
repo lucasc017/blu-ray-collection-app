@@ -1,5 +1,6 @@
 import type {
   ApiErrorBody,
+  AuthenticatedUser,
   ListTitlesResponse,
   SyncStatus,
   TitleDetails,
@@ -17,8 +18,18 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(path, { headers: { Accept: "application/json" }, signal });
+async function request<T>(
+  path: string,
+  options: { method?: "GET" | "PUT"; signal?: AbortSignal } = {},
+): Promise<T> {
+  const response = await fetch(path, {
+    method: options.method,
+    headers: {
+      Accept: "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    signal: options.signal,
+  });
   if (!response.ok) {
     const fallback: ApiErrorBody = {
       error: {
@@ -35,13 +46,19 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 export const collectionApi = {
   list(query: URLSearchParams, signal?: AbortSignal) {
-    return request<ListTitlesResponse>(`/api/titles?${query.toString()}`, signal);
+    return request<ListTitlesResponse>(`/api/titles?${query.toString()}`, { signal });
   },
   details(path: string, signal?: AbortSignal) {
-    return request<TitleDetails>(path, signal);
+    return request<TitleDetails>(path, { signal });
   },
   status(signal?: AbortSignal) {
-    return request<SyncStatus>("/api/status", signal);
+    return request<SyncStatus>("/api/status", { signal });
+  },
+};
+
+export const sessionApi = {
+  bootstrap(signal?: AbortSignal) {
+    return request<AuthenticatedUser>("/api/session", { method: "PUT", signal });
   },
 };
 

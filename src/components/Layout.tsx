@@ -18,6 +18,7 @@ export function Layout() {
             Collection
           </NavLink>
           <NavLink to="/about">About</NavLink>
+          <a href="/cdn-cgi/access/logout">Sign out</a>
         </nav>
       </header>
       <main>

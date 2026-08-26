@@ -1,13 +1,21 @@
 # Privacy
 
-## Visitor data
+## Account and visitor data
 
-V1 has no accounts, comments, analytics, advertising, personalized tracking, or application cookies.
-The browser requests the same-origin public API and displays read-only collection metadata. The
-application does not intentionally store visitor IP addresses or browser identifiers in D1.
+The application uses Google sign-in through Cloudflare Access and is available only to exact email
+addresses on the owner's Cloudflare allowlist. The application does not receive or store Google
+passwords, OAuth access tokens, profile photos, contacts, comments, analytics, advertising IDs, or
+viewing history. D1 stores a stable application-user ID, lowercased email address, current Access
+subject, creation timestamp, and last-seen timestamp. The email supports account identity and future
+server-side attribution; it is not displayed by the current UI.
 
-Cloudflare may process ordinary request metadata while serving the site and Worker logs according to
-the account configuration and Cloudflare terms. TMDB poster and backdrop images are loaded from
+Cloudflare Access sets essential authentication cookies on the team and application domains. The
+configured session duration is seven days, subject to owner revocation and Cloudflare/Google policy.
+The browser requests the same-origin API and displays read-only collection metadata. The application
+does not intentionally store visitor IP addresses or browser identifiers in D1.
+
+Cloudflare and Google may process sign-in and ordinary request metadata according to their account
+configuration and terms. TMDB poster and backdrop images are loaded from
 `image.tmdb.org`, so TMDB receives ordinary network request information such as the visitor IP
 address, user agent, referrer behavior allowed by the site policy, and requested image path.
 
@@ -27,8 +35,10 @@ Browser Run session to Blu-ray.com. The application extracts bounded public rele
 does not store collection HTML, browser recordings, source credentials, or cookies.
 
 The owner-assisted importer processes saved HTML locally and uploads only validated release IDs,
-labels, category markers, and public release-page links. Raw collection HTML and the configured
-collection URL are not uploaded or stored.
+labels, category markers, and public release-page links. A remote import authenticates to Access
+with a dedicated service token and then to the application with the independent sync token. Neither
+credential is logged or stored in D1. Raw collection HTML and the configured collection URL are not
+uploaded or stored.
 
 Production D1 exports contain the owner's derived collection and synchronization history. They are
 private operator backups, must remain outside the public repository and CI artifacts, and should be

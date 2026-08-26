@@ -1,6 +1,6 @@
 # The Disc Shelf
 
-A public, read-only Blu-ray and 4K UHD collection browser. React and Vite render the interface; a Hono Cloudflare Worker serves the API and scheduled importer; D1 stores the collection; TMDB supplies cached movie and TV-season metadata.
+A private, read-only Blu-ray and 4K UHD collection browser for allowlisted Google accounts. Cloudflare Access owns sign-in and admission; React and Vite render the interface; a Hono Cloudflare Worker validates Access identity and serves the API and scheduled importer; D1 stores users and the collection; TMDB supplies cached movie and TV-season metadata.
 
 Production: [The Disc Shelf](https://blu-ray-collection-app.blu-ray-collection-app.workers.dev)
 
@@ -8,6 +8,7 @@ Production: [The Disc Shelf](https://blu-ray-collection-app.blu-ray-collection-a
 
 - Node.js 24 LTS and npm 11
 - A Cloudflare account authenticated through Wrangler
+- A Cloudflare Zero Trust team and Google OAuth identity-provider configuration
 - A TMDB API Read Access Token
 - A private Blu-ray.com collection URL and permission to import it with browser automation
 
@@ -29,11 +30,13 @@ BLURAY_COLLECTION_URL="https://www.blu-ray.com/community/collection.php?u=your-u
 TMDB_READ_ACCESS_TOKEN="your-read-access-token"
 SYNC_ADMIN_TOKEN="a-long-random-local-token"
 SYNC_IMPORT_URL="http://localhost:5173/api/internal/collection-snapshot"
+ACCESS_TEAM_DOMAIN="https://your-team-name.cloudflareaccess.com"
+ACCESS_AUD="your-access-application-audience-tag"
 ```
 
 None of these values may use a `VITE_` prefix. They are Worker-only bindings and must never enter the browser bundle. The collection URL must use HTTPS on `blu-ray.com` or `www.blu-ray.com`, point to `/community/collection.php`, and include a numeric `u` value. The importer normalizes it to category 7 sorted by `recentlyaddedcollection`.
 
-The Vite development server serves the SPA and Worker together. The local D1 database is stored under ignored Wrangler state. A scheduled or protected manual sync uses Cloudflare Browser Run to scan the newest collection page. It requests the next numbered page only when every release on the current page was absent from D1, and it stops at the first page containing a known release or at the declared last page.
+The Vite development server serves the SPA and Worker together. Exact HTTP loopback origins (`localhost` and `127.0.0.1`) use a synthetic development identity; all other origins fail closed without a valid Access assertion. The local D1 database is stored under ignored Wrangler state. A scheduled or protected manual sync uses Cloudflare Browser Run to scan the newest collection page. It requests the next numbered page only when every release on the current page was absent from D1, and it stops at the first page containing a known release or at the declared last page.
 
 For an authoritative replacement that can detect removals, save every collection page in a normal browser and import the files in page order:
 
@@ -42,6 +45,8 @@ npm run import:collection -- .\snapshots\base.html .\snapshots\page-1.html
 ```
 
 The fallback importer verifies the pagination set, extracts only physical-release attributes, and sends a bounded manifest to the protected Worker endpoint. It never uploads the collection URL or raw HTML. Repeat `POST /api/internal/sync` with the sync token, or let Cron continue, until TMDB resolution completes.
+When `SYNC_IMPORT_URL` is remote HTTPS, `.dev.vars` must also contain the dedicated importer
+`CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`; local loopback imports do not require them.
 
 ## Common commands
 
@@ -61,9 +66,14 @@ The fallback importer verifies the pagination set, extracts only physical-releas
 
 Production deploys are manual and require explicit owner authorization. GitHub Actions validates but
 does not deploy. Run the public release gates, apply any forward-only D1 migrations, deploy with
-Wrangler, smoke-test the public API, and record the new Worker version. The first deployment for a
-new account must attach the three required secrets from a temporary file outside the repository;
+Wrangler, smoke-test the Access-protected API, and record the new Worker version. The first deployment for a
+new account must attach the five required Worker bindings from a temporary file outside the repository;
 routine deployments preserve the existing Worker secrets.
+
+Before deploying this change, the owner must configure Google as the only Cloudflare Access login
+method, create a self-hosted application for the production hostname, add an exact-email Allow
+policy with a seven-day session, and create a Service Auth policy for the snapshot importer. The
+allowlist lives only in Cloudflare and can be changed only by the Cloudflare account administrator.
 
 Follow the complete [production deployment and operations runbook](docs/DEPLOYMENT.md). It covers
 first-time provisioning, secret-safe AI operation, D1 backups, manual import batches, Cron/log
@@ -77,7 +87,9 @@ created.
 
 ## Security, privacy, and licensing
 
-The browser has no accounts, analytics, advertising cookies, or provider credentials. TMDB poster
+The browser has no password database, analytics, advertising cookies, or provider credentials.
+Cloudflare Access sets essential authentication cookies, and D1 stores the signed-in account's
+stable application ID, lowercased email, current Access subject, and account timestamps. TMDB poster
 and backdrop images load from `image.tmdb.org`; those requests disclose ordinary network metadata
 to TMDB. See [Privacy](docs/PRIVACY.md) and [Security](SECURITY.md).
 

@@ -7,7 +7,8 @@
 - `sync_days` stores the randomly selected Eastern-time slot and the current lease.
 - `sync_runs` stores phase, cursor, counters, status, and safe error summary.
 - `sync_issues` records unresolved or ambiguous mapping work.
+- `app_users` stores the stable local user ID, case-insensitive email, current Cloudflare Access subject, and creation/last-seen timestamps for identities already admitted by the external allowlist.
 
-A title is publicly owned only while at least one active source release links to it. Source releases are soft-deactivated rather than deleted. Metadata is cached for 30 days and may be refreshed independently of ownership discovery.
+A title is displayed as owned only while at least one active source release links to it. Source releases are soft-deactivated rather than deleted. Metadata is cached for 30 days and may be refreshed independently of ownership discovery. `app_users` is not an authorization allowlist; Cloudflare Access remains the sole admission authority.
 
 All schema evolution uses ordered SQL migrations. Existing migration files are immutable after deployment.

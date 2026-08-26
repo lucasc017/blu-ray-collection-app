@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 import { readFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
 
 const MAX_FILES = 20;
@@ -31,7 +32,7 @@ function validatedCollectionUrl(value) {
   return url;
 }
 
-function validatedImportUrl(value) {
+export function validatedImportUrl(value) {
   let url;
   try {
     url = new URL(value);
@@ -51,6 +52,33 @@ function validatedImportUrl(value) {
     fail("SYNC_IMPORT_URL must be HTTPS (or local HTTP) and use the snapshot endpoint path.");
   }
   return url;
+}
+
+function usableAccessCredential(value) {
+  return (
+    typeof value === "string" &&
+    value === value.trim() &&
+    value.length >= 16 &&
+    !/replace-with|your-(?:client|service|token)/i.test(value)
+  );
+}
+
+export function accessHeadersForImport(importUrl, env = process.env) {
+  const localHttp =
+    importUrl.protocol === "http:" &&
+    (importUrl.hostname === "localhost" || importUrl.hostname === "127.0.0.1");
+  if (localHttp) return {};
+
+  if (
+    !usableAccessCredential(env.CF_ACCESS_CLIENT_ID) ||
+    !usableAccessCredential(env.CF_ACCESS_CLIENT_SECRET)
+  ) {
+    fail("Cloudflare Access service-token credentials are missing or invalid for a remote import.");
+  }
+  return {
+    "CF-Access-Client-Id": env.CF_ACCESS_CLIENT_ID,
+    "CF-Access-Client-Secret": env.CF_ACCESS_CLIENT_SECRET,
+  };
 }
 
 function entriesFromHtml(html, collectionUrl) {
@@ -89,6 +117,7 @@ async function main() {
 
   const collectionUrl = validatedCollectionUrl(process.env.BLURAY_COLLECTION_URL);
   const importUrl = validatedImportUrl(process.env.SYNC_IMPORT_URL || DEFAULT_IMPORT_URL);
+  const accessHeaders = accessHeadersForImport(importUrl);
   const token = process.env.SYNC_ADMIN_TOKEN;
   if (!token || token.length < 32) fail("SYNC_ADMIN_TOKEN is missing or invalid.");
 
@@ -124,6 +153,7 @@ async function main() {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      ...accessHeaders,
     },
     body: JSON.stringify({ version: 1, pageCount: filePaths.length, releases }),
   });
@@ -137,7 +167,13 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : "The collection snapshot import failed.");
-  process.exitCode = 1;
-});
+const isEntrypoint =
+  typeof process.argv[1] === "string" && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isEntrypoint) {
+  main().catch((error) => {
+    console.error(
+      error instanceof Error ? error.message : "The collection snapshot import failed.",
+    );
+    process.exitCode = 1;
+  });
+}

@@ -78,6 +78,13 @@ export interface ApiErrorBody {
   error: { code: string; message: string; requestId: string };
 }
 
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+  createdAt: string;
+  lastSeenAt: string;
+}
+
 export function titlePath(
   entry: Pick<CollectionEntry, "mediaType" | "tmdbId" | "seasonNumber">,
 ): string {
