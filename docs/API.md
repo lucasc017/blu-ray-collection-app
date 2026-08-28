@@ -7,12 +7,21 @@ assertions. Exact local HTTP loopback requests use a development identity.
 
 ## Signed-in user routes
 
-- `PUT /session`: idempotently creates or refreshes the D1 application-user record derived from the verified Access subject and email. Returns `{ id, email, createdAt, lastSeenAt }`.
+- `PUT /session`: idempotently creates or refreshes the D1 application-user record derived from the verified Access subject and email. Returns `{ id, email, createdAt, lastSeenAt, isAdmin }`; `isAdmin` is computed from the verified email and `ADMIN_EMAIL` binding.
 
 - `GET /titles`: accepts `q` (100 characters), `type=movie|tv`, numeric `genre`, numeric `year`, `sort=title|release_date|recently_added`, `page`, and `pageSize` (maximum 60). Returns items, pagination, and available filters.
 - `GET /titles/movie/:tmdbId`: returns one owned movie and its active releases.
 - `GET /titles/tv/:tmdbId/season/:seasonNumber`: returns one owned TV season and its active releases.
 - `GET /status`: returns collection counts, state, unresolved issue count, and last successful sync time.
+
+## Administrator routes
+
+All `/admin/*` routes require a user principal whose normalized verified email exactly matches the `ADMIN_EMAIL` Worker secret. Ordinary user and service-token principals receive `403`.
+
+- `GET /admin/reviews`: accepts `status=unresolved|resolved`, `page`, and `pageSize` (maximum 50). Returns source releases, the latest unresolved issue, active mapping, and retained review revisions.
+- `GET /admin/tmdb/search`: accepts `mediaType=movie|tv`, `q` (2–100 characters), and optional `year`. Returns at most 20 first-page TMDB candidates.
+- `GET /admin/tmdb/tv/:tmdbId/seasons`: returns the bounded season list for one TMDB series.
+- `PUT /admin/reviews/:productId`: accepts an expected issue or active revision and 1–20 unique ordered movie/TV-season targets. The Worker validates every target through TMDB, writes metadata and ownership atomically, resolves open issues, and appends an audit revision. Stale expected state returns `409` without replacing the mapping.
 
 ## Internal route
 

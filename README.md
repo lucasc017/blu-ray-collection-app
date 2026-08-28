@@ -1,6 +1,6 @@
 # The Disc Shelf
 
-A private, read-only Blu-ray and 4K UHD collection browser for allowlisted Google accounts. Cloudflare Access owns sign-in and admission; React and Vite render the interface; a Hono Cloudflare Worker validates Access identity and serves the API and scheduled importer; D1 stores users and the collection; TMDB supplies cached movie and TV-season metadata.
+A private Blu-ray and 4K UHD collection browser for allowlisted Google accounts, with an owner-only metadata conflict review screen. Cloudflare Access owns sign-in and admission; React and Vite render the interface; a Hono Cloudflare Worker validates Access identity and serves the API and scheduled importer; D1 stores users, reviews, and the collection; TMDB supplies cached movie and TV-season metadata.
 
 Production: [The Disc Shelf](https://blu-ray-collection-app.blu-ray-collection-app.workers.dev)
 
@@ -26,6 +26,7 @@ npm run dev
 Edit `.dev.vars` before starting the application:
 
 ```dotenv
+ADMIN_EMAIL="developer@localhost.invalid"
 BLURAY_COLLECTION_URL="https://www.blu-ray.com/community/collection.php?u=your-user-id&sortby=recentlyaddedcollection"
 TMDB_READ_ACCESS_TOKEN="your-read-access-token"
 SYNC_ADMIN_TOKEN="a-long-random-local-token"
@@ -36,7 +37,7 @@ ACCESS_AUD="your-access-application-audience-tag"
 
 None of these values may use a `VITE_` prefix. They are Worker-only bindings and must never enter the browser bundle. The collection URL must use HTTPS on `blu-ray.com` or `www.blu-ray.com`, point to `/community/collection.php`, and include a numeric `u` value. The importer normalizes it to category 7 sorted by `recentlyaddedcollection`.
 
-The Vite development server serves the SPA and Worker together. Exact HTTP loopback origins (`localhost` and `127.0.0.1`) use a synthetic development identity; all other origins fail closed without a valid Access assertion. The local D1 database is stored under ignored Wrangler state. A scheduled or protected manual sync uses Cloudflare Browser Run to scan the newest collection page. It requests the next numbered page only when every release on the current page was absent from D1, and it stops at the first page containing a known release or at the declared last page.
+The Vite development server serves the SPA and Worker together. Exact HTTP loopback origins (`localhost` and `127.0.0.1`) use a synthetic development identity, so local development sets `ADMIN_EMAIL` to `developer@localhost.invalid`; all other origins fail closed without a valid Access assertion. The local D1 database is stored under ignored Wrangler state. A scheduled or protected manual sync uses Cloudflare Browser Run to scan the newest collection page. It requests the next numbered page only when every release on the current page was absent from D1, and it stops at the first page containing a known release or at the declared last page.
 
 For an authoritative replacement that can detect removals, save every collection page in a normal browser and import the files in page order:
 
@@ -67,7 +68,7 @@ When `SYNC_IMPORT_URL` is remote HTTPS, `.dev.vars` must also contain the dedica
 Production deploys are manual and require explicit owner authorization. GitHub Actions validates but
 does not deploy. Run the public release gates, apply any forward-only D1 migrations, deploy with
 Wrangler, smoke-test the Access-protected API, and record the new Worker version. The first deployment for a
-new account must attach the five required Worker bindings from a temporary file outside the repository;
+new account must attach the six required Worker bindings from a temporary file outside the repository;
 routine deployments preserve the existing Worker secrets.
 
 Before deploying this change, the owner must configure Google as the only Cloudflare Access login
@@ -89,7 +90,7 @@ created.
 
 The browser has no password database, analytics, advertising cookies, or provider credentials.
 Cloudflare Access sets essential authentication cookies, and D1 stores the signed-in account's
-stable application ID, lowercased email, current Access subject, and account timestamps. TMDB poster
+stable application ID, lowercased email, current Access subject, account timestamps, and administrator review history. TMDB poster
 and backdrop images load from `image.tmdb.org`; those requests disclose ordinary network metadata
 to TMDB. See [Privacy](docs/PRIVACY.md) and [Security](SECURITY.md).
 

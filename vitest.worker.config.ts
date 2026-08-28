@@ -11,6 +11,7 @@ export default defineConfig({
         // by the explicit hosted smoke test rather than every Workerd test run.
         browserRendering: { binding: "BROWSER" },
         bindings: {
+          ADMIN_EMAIL: "developer@localhost.invalid",
           TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")),
           BLURAY_COLLECTION_URL:
             "https://www.blu-ray.com/community/collection.php?u=123456&categoryid=7",

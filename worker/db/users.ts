@@ -11,7 +11,7 @@ export async function upsertAppUser(
   db: D1Database,
   identity: { subject: string; email: string },
   now: string,
-): Promise<AuthenticatedUser> {
+): Promise<Omit<AuthenticatedUser, "isAdmin">> {
   const row = await db
     .prepare(
       `INSERT INTO app_users (email, access_subject, created_at, last_seen_at)

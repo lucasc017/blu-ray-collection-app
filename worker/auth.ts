@@ -177,3 +177,19 @@ export function userIdentity(
 export function mayUseInternalRoutes(principal: AccessPrincipal): boolean {
   return principal.kind === "service" || principal.kind === "development";
 }
+
+export async function mayUseAdminRoutes(
+  principal: AccessPrincipal,
+  configuredAdminEmail: string | undefined,
+): Promise<boolean> {
+  const identity = userIdentity(principal);
+  const adminEmail = emailSchema.safeParse(configuredAdminEmail);
+  if (!identity || !adminEmail.success) return false;
+
+  const encoder = new TextEncoder();
+  const [identityDigest, adminDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(identity.email)),
+    crypto.subtle.digest("SHA-256", encoder.encode(adminEmail.data)),
+  ]);
+  return crypto.subtle.timingSafeEqual(identityDigest, adminDigest);
+}

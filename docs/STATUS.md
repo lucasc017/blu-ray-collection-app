@@ -1,12 +1,12 @@
 # Status
 
-Last updated: 2026-08-25
+Last updated: 2026-08-27
 
 ## Implemented
 
 - React/Vite SPA and Hono Worker foundation with generated Cloudflare bindings.
 - D1 schema for titles, releases, ownership, schedules, runs, and issues.
-- Bounded Browser Run discovery, owner-snapshot fallback, reviewed set overrides, conservative TMDB client, and resumable sync engine.
+- Bounded Browser Run discovery, owner-snapshot fallback, reviewed product mappings, conservative TMDB client, and resumable sync engine.
 - Public list/detail/status APIs and protected manual sync route.
 - Responsive collection, movie/TV-season detail, error states, and TMDB credits.
 - Browser and Workerd/D1 test foundations plus GitHub CI.
@@ -25,39 +25,37 @@ Last updated: 2026-08-25
   `SYNC_IMPORT_URL` is not a production binding.
 - Initial production Browser Run import completed across six bounded invocations: 106 active source
   releases, 87 resolved releases, 19 unresolved issues, and 113 public title entries.
-- Production homepage, public status/list APIs, security headers, structured completion logs,
+- Production homepage, authenticated status/list APIs, security headers, structured completion logs,
   deployment/version metadata, and a private post-import D1 export verified.
 - Canonical production runbook and AI development/deployment guidance added for repeatable future
   sessions.
+- Whole-host Cloudflare Access deployed with Google exact-email admission, seven-day sessions,
+  rotating-JWKS Worker verification, strict user/service principal separation, and disabled preview URLs.
+- Migration `0002_access_users.sql`, session bootstrap, Access sign-out, and the remote importer
+  service-token path deployed and verified; remote D1 reports no earlier pending migrations.
 
 ## Implemented locally, pending production rollout
 
-- Cloudflare Access JWT verification using rotating JWKS with issuer, audience, signature, expiry,
-  token-type, and claim-shape validation.
-- Strict principal separation: Google users can access collection/session routes; Access service
-  tokens can access only internal routes, which retain the independent sync-token check.
-- Exact HTTP loopback development identity and fail-closed behavior for every other missing or
-  invalid Access assertion.
-- Forward migration `0002_access_users.sql`, idempotent `PUT /api/session`, and minimal D1 user
-  records for future server-side attribution.
-- React session bootstrap with accessible loading/error states, expired-session re-entry, Access
-  sign-out, and `X-Requested-With` on API requests.
-- Remote snapshot importer support for a dedicated Access service token; local HTTP imports remain
-  credential-free at the Access layer.
-- Versioned Worker preview URLs disabled and the Google exact-email/7-day-session deployment runbook
-  documented.
+- `ADMIN_EMAIL` authorization layered on the existing verified Access user identity; ordinary users
+  and service principals cannot read or mutate `/api/admin/*`.
+- Administrator-only `/admin/review` UI with unresolved/history queues, live movie/TV TMDB search,
+  TV season selection, ordered box-set mappings, confirmation, defer, and remapping.
+- Forward migration `0003_metadata_reviews.sql` with immutable audit revisions, ordered targets,
+  one-active-revision enforcement, and migration of the ten reviewed code overrides into D1.
+- Atomic metadata/mapping saves with expected-state conflict detection, actor attribution, retained
+  history, and `409` stale-review handling.
+- Sync precedence and write-time guards that preserve active reviewed mappings across discovery
+  changes and prevent automatic resolution/issues from clobbering an administrator decision.
+- Browser, Worker, D1, migration, authorization, remap, stale-write, and sync-race coverage.
 
-No Cloudflare Access application, policy, identity provider, service token, Worker secret, remote D1
-migration, or deployment was changed by this implementation task. The live application remains on
-the previously deployed public version until those production actions are separately authorized.
+This implementation did not install `ADMIN_EMAIL`, apply migration `0003`, deploy a Worker version,
+or mutate production review data. Those remain distinct owner-authorized production actions.
 
 ## Remaining operational work
 
-- Authorize and configure the Google identity provider, whole-host self-hosted Access application,
-  owner-managed exact-email Allow policy, seven-day session, and importer Service Auth policy.
-- Install `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`, apply migration `0002`, deploy the validated build,
-  and run approved/disallowed-user plus service-token smoke tests as distinct authorized operations.
-- Review the 19 initial unresolved mappings and add verified product-ID overrides where appropriate.
+- Install `ADMIN_EMAIL`, privately back up D1 if desired, apply migration `0003`, deploy the validated
+  build, and run admin/non-admin/service-principal smoke tests as distinct authorized operations.
+- Review the unresolved mappings through the new administrator screen after rollout.
 - Observe a completed Cron-initiated daily run on `workers.dev` and record measured CPU/fetch behavior.
 - Keep GitHub secret scanning, push protection, CodeQL, Dependabot, private vulnerability reporting, CI, and protected-branch settings enabled.
 - Obtain explicit owner approval before future pushes, deployments, or repository-setting changes.

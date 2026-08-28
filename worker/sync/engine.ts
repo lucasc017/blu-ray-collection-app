@@ -1,9 +1,9 @@
 import type { SyncBatchResult } from "../../shared/contracts";
 import { validateSyncConfiguration } from "../config";
+import { getActiveReviewTargets } from "../db/admin-reviews";
 import { logEvent } from "../logging";
 import { fetchRecentlyAddedCollection } from "./bluray-client";
 import { ExternalFetchError, FetchBudget, FetchBudgetExceededError } from "./fetch-budget";
-import { releaseOverrides } from "./overrides";
 import { SyncRepository } from "./repository";
 import { getEasternSlot, randomDailySlot } from "./schedule";
 import { TmdbClient } from "./tmdb-client";
@@ -128,11 +128,11 @@ export async function runSyncBatch(env: Env, options: RunSyncOptions): Promise<S
           continue;
         }
 
-        const override = releaseOverrides[release.product_id];
+        const reviewedTargets = await getActiveReviewTargets(env.DB, release.product_id);
         let metadata: TitleMetadata[] | null = null;
-        if (override) {
+        if (reviewedTargets) {
           metadata = [];
-          for (const target of override) metadata.push(await tmdb.fetchMetadata(target));
+          for (const target of reviewedTargets) metadata.push(await tmdb.fetchMetadata(target));
         } else {
           const resolution = await tmdb.resolveMovie(release);
           if (!resolution.ok) {
@@ -142,7 +142,13 @@ export async function runSyncBatch(env: Env, options: RunSyncOptions): Promise<S
           }
           metadata = resolution.metadata;
         }
-        await repository.resolveRelease(run.id, release, metadata, options.now);
+        await repository.resolveRelease(
+          run.id,
+          release,
+          metadata,
+          options.now,
+          reviewedTargets ? "reviewed" : "automatic",
+        );
         run = (await repository.getRun(run.id)) ?? run;
         continue;
       }

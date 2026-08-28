@@ -8,7 +8,9 @@
 - `sync_runs` stores phase, cursor, counters, status, and safe error summary.
 - `sync_issues` records unresolved or ambiguous mapping work.
 - `app_users` stores the stable local user ID, case-insensitive email, current Cloudflare Access subject, and creation/last-seen timestamps for identities already admitted by the external allowlist.
+- `release_mapping_revisions` stores immutable, per-product administrator decisions, actor snapshots, originating issues, and supersession timestamps. A partial unique index permits only one active revision per product.
+- `release_mapping_review_targets` stores the ordered movie or TV-season targets for each revision and supports one-to-many box-set mappings.
 
-A title is displayed as owned only while at least one active source release links to it. Source releases are soft-deactivated rather than deleted. Metadata is cached for 30 days and may be refreshed independently of ownership discovery. `app_users` is not an authorization allowlist; Cloudflare Access remains the sole admission authority.
+A title is displayed as owned only while at least one active source release links to it. Source releases are soft-deactivated rather than deleted. Metadata is cached for 30 days and may be refreshed independently of ownership discovery. `app_users` is not an authorization allowlist; Cloudflare Access remains the admission authority and the `ADMIN_EMAIL` binding grants the single application administrator role. Review actor labels remain as audit snapshots if an application-user row is later removed.
 
 All schema evolution uses ordered SQL migrations. Existing migration files are immutable after deployment.

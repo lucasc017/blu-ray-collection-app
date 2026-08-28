@@ -1,3 +1,9 @@
+import type {
+  MediaType,
+  TmdbReviewSearchResponse,
+  TmdbReviewSearchResult,
+  TmdbReviewSeasonsResponse,
+} from "../../shared/contracts";
 import { ExternalFetchError, type FetchBudget } from "./fetch-budget";
 import { normalizeTitle, sortTitle } from "./normalization";
 import type { MappingTarget, ReleaseResolution, SourceReleaseRow, TitleMetadata } from "./types";
@@ -14,10 +20,21 @@ interface TmdbMovieSearchResult {
   title: string;
   original_title: string;
   release_date?: string;
+  overview?: string;
+  poster_path?: string | null;
 }
 
-interface TmdbSearchResponse {
-  results: TmdbMovieSearchResult[];
+interface TmdbTvSearchResult {
+  id: number;
+  name: string;
+  original_name: string;
+  first_air_date?: string;
+  overview?: string;
+  poster_path?: string | null;
+}
+
+interface TmdbSearchResponse<T> {
+  results: T[];
 }
 
 interface TmdbMovieDetails {
@@ -42,6 +59,13 @@ interface TmdbSeriesDetails {
   backdrop_path: string | null;
   vote_average: number | null;
   genres: TmdbGenre[];
+  seasons?: Array<{
+    season_number: number;
+    name: string;
+    air_date: string | null;
+    episode_count: number;
+    poster_path: string | null;
+  }>;
 }
 
 interface TmdbSeasonDetails {
@@ -128,7 +152,10 @@ export class TmdbClient {
       include_adult: "false",
     };
     if (release.release_year) parameters.year = String(release.release_year);
-    const search = await this.getJson<TmdbSearchResponse>("/search/movie", parameters);
+    const search = await this.getJson<TmdbSearchResponse<TmdbMovieSearchResult>>(
+      "/search/movie",
+      parameters,
+    );
     const matches = search.results.filter((candidate) => {
       const titleMatches =
         normalizeTitle(candidate.title) === release.normalized_title ||
@@ -165,6 +192,74 @@ export class TmdbClient {
       metadata: [
         await this.fetchMetadata({ mediaType: "movie", tmdbId: match.id, seasonNumber: -1 }),
       ],
+    };
+  }
+
+  async search(
+    mediaType: MediaType,
+    query: string,
+    year?: number,
+  ): Promise<TmdbReviewSearchResponse> {
+    const parameters: Record<string, string> = {
+      query,
+      include_adult: "false",
+      page: "1",
+    };
+    if (year) {
+      parameters[mediaType === "movie" ? "year" : "first_air_date_year"] = String(year);
+    }
+
+    let items: TmdbReviewSearchResult[];
+    if (mediaType === "movie") {
+      const response = await this.getJson<TmdbSearchResponse<TmdbMovieSearchResult>>(
+        "/search/movie",
+        parameters,
+      );
+      items = response.results.slice(0, 20).map((result) => ({
+        mediaType,
+        tmdbId: result.id,
+        title: result.title,
+        originalTitle: result.original_title,
+        overview: result.overview ?? "",
+        releaseDate: result.release_date || null,
+        releaseYear: result.release_date ? Number(result.release_date.slice(0, 4)) || null : null,
+        posterPath: result.poster_path ?? null,
+      }));
+    } else {
+      const response = await this.getJson<TmdbSearchResponse<TmdbTvSearchResult>>(
+        "/search/tv",
+        parameters,
+      );
+      items = response.results.slice(0, 20).map((result) => ({
+        mediaType,
+        tmdbId: result.id,
+        title: result.name,
+        originalTitle: result.original_name,
+        overview: result.overview ?? "",
+        releaseDate: result.first_air_date || null,
+        releaseYear: result.first_air_date
+          ? Number(result.first_air_date.slice(0, 4)) || null
+          : null,
+        posterPath: result.poster_path ?? null,
+      }));
+    }
+    return { items };
+  }
+
+  async listSeasons(tmdbId: number): Promise<TmdbReviewSeasonsResponse> {
+    const series = await this.getJson<TmdbSeriesDetails>(`/tv/${tmdbId}`);
+    return {
+      seriesTitle: series.name,
+      seasons: (series.seasons ?? [])
+        .filter((season) => season.season_number >= 0)
+        .sort((left, right) => left.season_number - right.season_number)
+        .map((season) => ({
+          seasonNumber: season.season_number,
+          name: season.name,
+          airDate: season.air_date,
+          episodeCount: season.episode_count,
+          posterPath: season.poster_path,
+        })),
     };
   }
 

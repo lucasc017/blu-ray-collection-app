@@ -21,6 +21,7 @@ describe("SessionProvider", () => {
           email: "approved@example.com",
           createdAt: "2026-08-25T12:00:00.000Z",
           lastSeenAt: "2026-08-25T12:00:00.000Z",
+          isAdmin: false,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       ),

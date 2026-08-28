@@ -6,5 +6,5 @@
 - Sync steps must be idempotent and resumable from D1. Do not rely on module memory between invocations.
 - Count every external request, including retries, against `FetchBudget`. The configured maximum may not exceed 40 in V1.
 - Only exact, unambiguous normalized movie/year matches may be accepted automatically. Put uncertain releases in `sync_issues`.
-- Box-set and TV-season overrides are keyed by stable Blu-ray product IDs and require review plus tests.
+- Box-set and TV-season mappings are keyed by stable Blu-ray product IDs, stored as audited D1 review revisions, and require review plus tests.
 - Retry transient transport, `429`, and `5xx` failures without discarding the last successful data. Never log provider tokens.

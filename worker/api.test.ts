@@ -73,8 +73,10 @@ describe("authenticated collection API", () => {
       email: string;
       createdAt: string;
       lastSeenAt: string;
+      isAdmin: boolean;
     }>();
     expect(first).toMatchObject({ email: "developer@localhost.invalid" });
+    expect(first).toMatchObject({ isAdmin: true });
 
     const secondResponse = await SELF.fetch("http://127.0.0.1/api/session", { method: "PUT" });
     const second = await secondResponse.json<typeof first>();
@@ -96,6 +98,62 @@ describe("authenticated collection API", () => {
     await expect(response.json<{ error: { code: string } }>()).resolves.toMatchObject({
       error: { code: "unauthorized" },
     });
+  });
+
+  it("lists unresolved metadata conflicts only through the admin API", async () => {
+    const now = "2026-08-27T12:00:00.000Z";
+    await env.DB.batch([
+      env.DB.prepare(
+        `INSERT INTO source_releases
+          (product_id, source_title, normalized_title, source_url, format, source_fingerprint,
+           mapping_revision, mapping_status, active, first_seen_at, last_seen_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 'issue', 1, ?, ?, ?)`,
+      ).bind(
+        "271695",
+        "21 Jump Street 4K (2012)",
+        "21 jump street",
+        "https://www.blu-ray.com/movies/21-Jump-Street-4K-Blu-ray/271695/",
+        "4K UHD",
+        "test-fingerprint",
+        "test",
+        now,
+        now,
+        now,
+      ),
+      env.DB.prepare(
+        `INSERT INTO sync_issues (product_id, code, message, details_json, created_at)
+           VALUES (?, 'ambiguous_match', 'More than one match was found.', ?, ?)`,
+      ).bind("271695", JSON.stringify({ candidateIds: [1, 2] }), now),
+    ]);
+
+    const response = await SELF.fetch("http://localhost/api/admin/reviews?status=unresolved");
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      total: number;
+      items: Array<{ productId: string; issue: { code: string } }>;
+    }>();
+    expect(body.total).toBe(1);
+    expect(body.items[0]).toMatchObject({
+      productId: "271695",
+      issue: { code: "ambiguous_match" },
+    });
+  });
+
+  it("rejects malformed review mutations before contacting TMDB", async () => {
+    const response = await SELF.fetch("http://localhost/api/admin/reviews/307056", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expected: { issueId: null, revision: 1 }, targets: [] }),
+    });
+    expect(response.status).toBe(400);
+    await expect(response.json<{ error: { code: string } }>()).resolves.toMatchObject({
+      error: { code: "invalid_review" },
+    });
+  });
+
+  it("does not expose admin data without an Access identity", async () => {
+    const response = await SELF.fetch("https://example.com/api/admin/reviews");
+    expect(response.status).toBe(401);
   });
 
   it("does not disclose the protected sync endpoint", async () => {

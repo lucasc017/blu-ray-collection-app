@@ -1,4 +1,4 @@
-import { MAPPING_REVISION } from "./overrides";
+import { MAPPING_REVISION } from "./mapping-revision";
 import type {
   MappingTarget,
   ParsedRelease,
@@ -113,11 +113,20 @@ export class SyncRepository {
             source_url = excluded.source_url,
             format = excluded.format,
             mapping_status = CASE
+              WHEN EXISTS (
+                SELECT 1 FROM release_mapping_revisions review
+                WHERE review.product_id = excluded.product_id AND review.superseded_at IS NULL
+              ) THEN 'resolved'
               WHEN source_releases.source_fingerprint != excluded.source_fingerprint
                 OR source_releases.mapping_revision != excluded.mapping_revision
               THEN 'pending' ELSE source_releases.mapping_status END,
             source_fingerprint = excluded.source_fingerprint,
-            mapping_revision = excluded.mapping_revision,
+            mapping_revision = CASE
+              WHEN EXISTS (
+                SELECT 1 FROM release_mapping_revisions review
+                WHERE review.product_id = excluded.product_id AND review.superseded_at IS NULL
+              ) THEN source_releases.mapping_revision
+              ELSE excluded.mapping_revision END,
             active = 1,
             last_seen_at = excluded.last_seen_at,
             seen_sync_run_id = excluded.seen_sync_run_id,
@@ -267,30 +276,57 @@ export class SyncRepository {
     release: SourceReleaseRow,
     metadata: TitleMetadata[],
     now: Date,
+    source: "automatic" | "reviewed" = "automatic",
   ): Promise<void> {
     const titleIds: number[] = [];
     for (const title of metadata) titleIds.push(await this.upsertTitle(title));
     const timestamp = nowIso(now);
+    const automaticGuard =
+      source === "automatic"
+        ? `AND NOT EXISTS (
+             SELECT 1 FROM release_mapping_revisions review
+             WHERE review.product_id = ? AND review.superseded_at IS NULL
+           )`
+        : "";
+    const guardedProductBindings =
+      source === "automatic" ? [release.product_id, release.product_id] : [release.product_id];
     await this.db.batch([
       this.db
-        .prepare("DELETE FROM source_release_titles WHERE product_id = ?")
-        .bind(release.product_id),
+        .prepare(`DELETE FROM source_release_titles WHERE product_id = ? ${automaticGuard}`)
+        .bind(...guardedProductBindings),
       ...titleIds.map((titleId) =>
         this.db
-          .prepare("INSERT INTO source_release_titles (product_id, title_id) VALUES (?, ?)")
-          .bind(release.product_id, titleId),
+          .prepare(
+            `INSERT INTO source_release_titles (product_id, title_id)
+             SELECT ?, ? WHERE 1 = 1 ${automaticGuard}`,
+          )
+          .bind(
+            release.product_id,
+            titleId,
+            ...(source === "automatic" ? [release.product_id] : []),
+          ),
       ),
       this.db
         .prepare(
           `UPDATE source_releases SET mapping_status = 'resolved', mapping_revision = ?, updated_at = ?
-          WHERE product_id = ?`,
+          WHERE product_id = ? ${automaticGuard}`,
         )
-        .bind(MAPPING_REVISION, timestamp, release.product_id),
+        .bind(
+          MAPPING_REVISION,
+          timestamp,
+          release.product_id,
+          ...(source === "automatic" ? [release.product_id] : []),
+        ),
       this.db
         .prepare(
-          "UPDATE sync_issues SET resolved_at = ? WHERE product_id = ? AND resolved_at IS NULL",
+          `UPDATE sync_issues SET resolved_at = ?
+           WHERE product_id = ? AND resolved_at IS NULL ${automaticGuard}`,
         )
-        .bind(timestamp, release.product_id),
+        .bind(
+          timestamp,
+          release.product_id,
+          ...(source === "automatic" ? [release.product_id] : []),
+        ),
       this.db
         .prepare(
           `UPDATE sync_runs SET cursor = ?, releases_resolved = releases_resolved + 1, updated_at = ?
@@ -307,20 +343,25 @@ export class SyncRepository {
     now: Date,
   ): Promise<void> {
     const timestamp = nowIso(now);
+    const noActiveReview = `NOT EXISTS (
+      SELECT 1 FROM release_mapping_revisions review
+      WHERE review.product_id = ? AND review.superseded_at IS NULL
+    )`;
     await this.db.batch([
       this.db
         .prepare(
-          "UPDATE sync_issues SET resolved_at = ? WHERE product_id = ? AND resolved_at IS NULL",
+          `UPDATE sync_issues SET resolved_at = ?
+           WHERE product_id = ? AND resolved_at IS NULL AND ${noActiveReview}`,
         )
-        .bind(timestamp, release.product_id),
+        .bind(timestamp, release.product_id, release.product_id),
       this.db
-        .prepare("DELETE FROM source_release_titles WHERE product_id = ?")
-        .bind(release.product_id),
+        .prepare(`DELETE FROM source_release_titles WHERE product_id = ? AND ${noActiveReview}`)
+        .bind(release.product_id, release.product_id),
       this.db
         .prepare(
           `INSERT INTO sync_issues
           (sync_run_id, product_id, code, message, details_json, created_at)
-          VALUES (?, ?, ?, ?, ?, ?)`,
+          SELECT ?, ?, ?, ?, ?, ? WHERE ${noActiveReview}`,
         )
         .bind(
           runId,
@@ -329,18 +370,22 @@ export class SyncRepository {
           issue.message,
           issue.details ? JSON.stringify(issue.details) : null,
           timestamp,
+          release.product_id,
         ),
       this.db
         .prepare(
-          "UPDATE source_releases SET mapping_status = 'issue', updated_at = ? WHERE product_id = ?",
+          `UPDATE source_releases SET mapping_status = 'issue', updated_at = ?
+           WHERE product_id = ? AND ${noActiveReview}`,
         )
-        .bind(timestamp, release.product_id),
+        .bind(timestamp, release.product_id, release.product_id),
       this.db
         .prepare(
-          `UPDATE sync_runs SET cursor = ?, issues_created = issues_created + 1, updated_at = ?
+          `UPDATE sync_runs SET cursor = ?,
+            issues_created = issues_created + CASE WHEN ${noActiveReview} THEN 1 ELSE 0 END,
+            updated_at = ?
           WHERE id = ?`,
         )
-        .bind(release.product_id, timestamp, runId),
+        .bind(release.product_id, release.product_id, timestamp, runId),
     ]);
   }
 

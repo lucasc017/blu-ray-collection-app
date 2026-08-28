@@ -15,11 +15,12 @@ Give approved friends a polished, private way to browse the owner’s physical m
 - Import an owner-saved full collection snapshot through a protected local fallback when removals must be reconciled.
 - Sign in through Google and admit only exact email addresses maintained by the owner in Cloudflare Access.
 - Create or refresh a minimal D1 application-user record after Access admits a browser session.
+- Let the one configured administrator resolve metadata conflicts through bounded live TMDB search, ordered movie/TV-season mappings, and retained revision history.
 
 ## Not in V1
 
-Passwords, email verification, account recovery, in-app allowlist management, suggestions, ratings, watch history, comments, admin screens, custom domains, and live external lookups during user requests are deferred.
+Passwords, email verification, account recovery, in-app allowlist or administrator management, suggestions, ratings, watch history, comments, custom domains, bulk approvals, ignored/excluded releases, and raw metadata editing are deferred. Live external lookups are limited to the administrator review workflow; ordinary browsing remains D1-only.
 
 ## Success criteria
 
-The site remains usable while sync is in progress, every discovered source release is either mapped or recorded as an issue, partial external failures preserve prior ownership, unapproved identities are denied before application data is served, and no provider or Access credential reaches Git, logs, APIs, or browser code.
+The site remains usable while sync is in progress, every discovered source release is either mapped or recorded as an issue, reviewed mappings cannot be overwritten by automatic sync, partial external failures preserve prior ownership, non-admin users cannot read or mutate review data, unapproved identities are denied before application data is served, and no provider or Access credential reaches Git, logs, APIs, or browser code.

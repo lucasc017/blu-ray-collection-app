@@ -53,6 +53,7 @@ const approvedSyntheticCollectionIds = new Set(["0", "42", "123456"]);
 
 function readText(file) {
   const absolute = join(root, file);
+  if (!existsSync(absolute)) return null;
   if (statSync(absolute).size > 2_000_000) return null;
   const buffer = readFileSync(absolute);
   if (buffer.includes(0)) return null;
@@ -104,7 +105,12 @@ const browserExtensions = new Set([".css", ".html", ".js", ".json", ".map", ".sv
 for (const absolute of walk(join(root, "dist", "client"))) {
   if (!browserExtensions.has(extname(absolute))) continue;
   const text = readFileSync(absolute, "utf8");
-  for (const name of ["BLURAY_COLLECTION_URL", "TMDB_READ_ACCESS_TOKEN", "SYNC_ADMIN_TOKEN"]) {
+  for (const name of [
+    "ADMIN_EMAIL",
+    "BLURAY_COLLECTION_URL",
+    "TMDB_READ_ACCESS_TOKEN",
+    "SYNC_ADMIN_TOKEN",
+  ]) {
     if (text.includes(name))
       findings.push(`${relative(root, absolute)}: server-only binding in browser bundle`);
   }

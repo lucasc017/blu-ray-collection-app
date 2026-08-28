@@ -2,7 +2,7 @@
 
 ## Mission
 
-Maintain a private, read-only physical media collection for explicitly allowlisted Google accounts. Cloudflare Access owns login and admission; D1 is the application source of truth; signed-in users must never trigger Blu-ray.com or TMDB calls. V1 has no password login, suggestions, admin UI, or client-side secrets.
+Maintain a private physical media collection for explicitly allowlisted Google accounts. Cloudflare Access owns login and admission; D1 is the application source of truth; ordinary signed-in users must never trigger Blu-ray.com or TMDB calls. The one configured administrator may perform bounded, audited TMDB metadata reviews. V1 has no password login, suggestions, or client-side secrets.
 
 ## Sources of truth
 
@@ -31,7 +31,7 @@ If documentation and code disagree, verify behavior with tests, then update both
 - Production is a manually deployed Cloudflare Worker. GitHub Actions validates only and must not be given deployment secrets without a separately approved design change.
 - Treat deploys, remote migrations, production imports/exports, secret changes, rollbacks, D1 mutations, routes, and domains as distinct external actions requiring explicit authorization in the current task.
 - When authorized, follow `docs/DEPLOYMENT.md`; record the active version before deployment and smoke-test the Access-protected URL and API afterward.
-- Routine deploys preserve existing Worker secrets. First-deploy secret transport must use an operating-system temporary file outside the repository, contain only the five required Worker binding keys, and be deleted in a guaranteed cleanup step.
+- Routine deploys preserve existing Worker secrets. First-deploy secret transport must use an operating-system temporary file outside the repository, contain only the six required Worker binding keys, and be deleted in a guaranteed cleanup step.
 - Never use `.dev.vars` directly as a deployment secrets file because it also contains local tooling configuration. A subprocess may load it without printing values for an explicitly authorized operation.
 - Treat D1 exports as private collection data. Store them outside the repository, never commit them, and never expose temporary download URLs.
 - Code rollback does not roll back D1. Never edit an applied migration or reset production storage; use a reviewed forward migration or explicit restore plan.
@@ -52,7 +52,7 @@ If documentation and code disagree, verify behavior with tests, then update both
 
 ## Architecture guardrails
 
-- One Cloudflare Worker deployment serves both the Vite SPA and `/api/*`.
+- One Cloudflare Worker deployment serves both the Vite SPA and `/api/*`; `/api/admin/*` requires the verified user email to match `ADMIN_EMAIL`.
 - D1 stores ownership, cached metadata, scheduling, leases, cursors, and issues.
 - Scheduled work is resumable and stays within a 40-request invocation budget.
 - TV ownership is season-level. Movie box sets expand to individual movies.

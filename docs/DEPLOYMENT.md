@@ -14,10 +14,10 @@ Workers; GitHub Actions validates changes but has no deployment credentials and 
 | Schedule             | Cron every 15 minutes; D1 selects at most one daily Eastern-time run |
 | Configuration source | `wrangler.jsonc` plus generated `worker-configuration.d.ts`          |
 
-The five required Worker secret bindings are `ACCESS_AUD`, `ACCESS_TEAM_DOMAIN`,
+The six required Worker secret bindings are `ADMIN_EMAIL`, `ACCESS_AUD`, `ACCESS_TEAM_DOMAIN`,
 `BLURAY_COLLECTION_URL`, `TMDB_READ_ACCESS_TOKEN`, and `SYNC_ADMIN_TOKEN`. The Access audience and
-team domain are configuration rather than credentials, but hidden bindings keep environment-specific
-identity settings out of source. `SYNC_IMPORT_URL`, `CF_ACCESS_CLIENT_ID`, and
+team domain are configuration rather than credentials, while `ADMIN_EMAIL` identifies the only
+application administrator. Hidden bindings keep all environment-specific identity settings out of source. `SYNC_IMPORT_URL`, `CF_ACCESS_CLIENT_ID`, and
 `CF_ACCESS_CLIENT_SECRET` are local importer configuration and must not be uploaded as Worker secrets.
 
 ## Authorization and safety gates
@@ -79,7 +79,7 @@ These steps are provisioning steps, not routine releases:
 4. Complete the Cloudflare Access provisioning section below and obtain the team domain and
    application audience tag.
 5. Create a temporary `.env` or JSON secrets file **outside the repository** containing only the
-   five required Worker bindings. Populate it through a secure editor or secret store; do not
+   six required Worker bindings. Populate it through a secure editor or secret store; do not
    construct it with `echo` or include values in shell history.
 6. Build and perform the initial upload with the bindings attached:
 
@@ -90,9 +90,9 @@ These steps are provisioning steps, not routine releases:
 
 7. Delete the temporary secrets file in a `finally`/cleanup step even if deployment fails. For an AI
    session, use a subprocess that loads local environment variables without printing them, writes
-   only the five required keys to an operating-system temporary directory, invokes Wrangler with
+   only the six required keys to an operating-system temporary directory, invokes Wrangler with
    `shell: false`, and removes the directory before returning.
-8. Confirm `npx wrangler secret list` reports the five expected names. This command does not reveal
+8. Confirm `npx wrangler secret list` reports the six expected names. This command does not reveal
    their values.
 
 The first `workers.dev` hostname may resolve before its TLS certificate is ready. A handshake error
@@ -113,7 +113,8 @@ authorization for the Cloudflare changes.
    per approved person. Require Login Method **Google**. Never use `Everyone`, `Emails ending in`, or
    a domain wildcard for this allowlist. Access is deny-by-default for every identity not listed.
 4. Ensure only the owner retains Cloudflare account permissions capable of editing Access policies,
-   identity providers, or service tokens. There is intentionally no application admin screen.
+   identity providers, or service tokens. Set the Worker-only `ADMIN_EMAIL` binding to the owner's
+   exact Google email; the application review screen does not manage Access admission or admin roles.
 5. Create one dedicated service token for the owner snapshot importer. Add a separate policy with
    Action **Service Auth**, Include selector **Service Token**, and that exact token. Store its Client
    ID and Client Secret locally as `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`.
@@ -137,7 +138,11 @@ and an unapproved Google account.
    npx wrangler versions list
    ```
 
-2. If the release contains a new migration, review it as forward-only and backward-compatible. For
+2. If `ADMIN_EMAIL` is not already installed, add it interactively with
+   `npx wrangler secret put ADMIN_EMAIL`. Treat this as a separately authorized secret mutation and
+   never pass the email in the command line or terminal transcript.
+
+3. If the release contains a new migration, review it as forward-only and backward-compatible. For
    risky data changes, export D1 to a private path outside the repository before applying it:
 
    ```powershell
@@ -150,13 +155,13 @@ and an unapproved Google account.
    export must suppress or redact that command output and report only the private destination and
    success/failure state.
 
-3. Deploy the validated build. Existing Worker secrets are preserved when omitted:
+4. Deploy the validated build. Existing Worker secrets are preserved when omitted:
 
    ```powershell
    npm run deploy -- --strict --tag release-YYYY-MM-DD --message "Describe the approved release"
    ```
 
-4. Save the version ID printed by Wrangler in the release record or pull request. Do not record
+5. Save the version ID printed by Wrangler in the release record or pull request. Do not record
    operator email addresses or account IDs.
 
 ## Smoke test
@@ -175,10 +180,14 @@ Expected results:
   collection HTML or JSON is returned.
 - An approved Google account can load `/`, `/api/status`, and `/api/titles`; React finishes the
   session bootstrap and the header contains **Sign out**.
+- An approved non-admin account has no **Metadata review** navigation, receives the normal 404 UI
+  for `/admin/review`, and receives `403` from `/api/admin/*`.
+- The `ADMIN_EMAIL` account can load `/admin/review`, list unresolved/history data, and perform a
+  TMDB search. Treat the first production mapping save as a separate reviewed D1 mutation.
 - A Google account absent from the exact-email list is denied.
 - The dedicated service token passes Access only for machine requests; the Worker still rejects an
   internal request that lacks the independent sync token.
-- The secret list contains exactly the required secret names; no values are printed.
+- The secret list contains exactly the six required secret names; no values are printed.
 - Deployment output lists `DB`, `BROWSER`, the public variables, the `workers.dev` URL, and the
   `*/15 * * * *` trigger.
 

@@ -2,7 +2,13 @@ import type {
   ApiErrorBody,
   AuthenticatedUser,
   ListTitlesResponse,
+  MetadataReviewListResponse,
+  MetadataReviewStatus,
+  SaveMetadataReviewRequest,
+  SaveMetadataReviewResponse,
   SyncStatus,
+  TmdbReviewSearchResponse,
+  TmdbReviewSeasonsResponse,
   TitleDetails,
 } from "../shared/contracts";
 
@@ -20,14 +26,17 @@ export class ApiError extends Error {
 
 async function request<T>(
   path: string,
-  options: { method?: "GET" | "PUT"; signal?: AbortSignal } = {},
+  options: { method?: "GET" | "PUT"; signal?: AbortSignal; body?: unknown } = {},
 ): Promise<T> {
+  const headers = new Headers({
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  });
+  if (options.body !== undefined) headers.set("Content-Type", "application/json");
   const response = await fetch(path, {
     method: options.method,
-    headers: {
-      Accept: "application/json",
-      "X-Requested-With": "XMLHttpRequest",
-    },
+    headers,
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: options.signal,
   });
   if (!response.ok) {
@@ -59,6 +68,34 @@ export const collectionApi = {
 export const sessionApi = {
   bootstrap(signal?: AbortSignal) {
     return request<AuthenticatedUser>("/api/session", { method: "PUT", signal });
+  },
+};
+
+export const reviewApi = {
+  list(status: MetadataReviewStatus, page: number, signal?: AbortSignal) {
+    const query = new URLSearchParams({ status, page: String(page), pageSize: "20" });
+    return request<MetadataReviewListResponse>(`/api/admin/reviews?${query.toString()}`, {
+      signal,
+    });
+  },
+  searchTmdb(mediaType: "movie" | "tv", query: string, year: string, signal?: AbortSignal) {
+    const parameters = new URLSearchParams({ mediaType, q: query });
+    if (year) parameters.set("year", year);
+    return request<TmdbReviewSearchResponse>(`/api/admin/tmdb/search?${parameters.toString()}`, {
+      signal,
+    });
+  },
+  seasons(tmdbId: number, signal?: AbortSignal) {
+    return request<TmdbReviewSeasonsResponse>(`/api/admin/tmdb/tv/${tmdbId}/seasons`, {
+      signal,
+    });
+  },
+  save(productId: string, input: SaveMetadataReviewRequest, signal?: AbortSignal) {
+    return request<SaveMetadataReviewResponse>(`/api/admin/reviews/${productId}`, {
+      method: "PUT",
+      body: input,
+      signal,
+    });
   },
 };
 

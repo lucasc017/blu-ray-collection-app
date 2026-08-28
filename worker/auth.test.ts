@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import {
   AccessAuthenticationError,
   authenticateRequest,
+  mayUseAdminRoutes,
   mayUseInternalRoutes,
   userIdentity,
   validateAccessConfiguration,
@@ -60,6 +61,18 @@ describe("Cloudflare Access authentication", () => {
     });
     expect(mayUseInternalRoutes(principal)).toBe(true);
     expect(userIdentity(principal)).toBeNull();
+    await expect(mayUseAdminRoutes(principal, "approved@example.com")).resolves.toBe(false);
+  });
+
+  it("authorizes only the configured administrator email", async () => {
+    const principal = {
+      kind: "user" as const,
+      subject: "google-user-subject",
+      email: "approved@example.com",
+    };
+    await expect(mayUseAdminRoutes(principal, " Approved@Example.COM ")).resolves.toBe(true);
+    await expect(mayUseAdminRoutes(principal, "friend@example.com")).resolves.toBe(false);
+    await expect(mayUseAdminRoutes(principal, "not-an-email")).resolves.toBe(false);
   });
 
   it("rejects assertions for another Access application", async () => {

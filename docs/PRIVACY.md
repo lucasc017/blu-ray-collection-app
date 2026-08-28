@@ -6,12 +6,14 @@ The application uses Google sign-in through Cloudflare Access and is available o
 addresses on the owner's Cloudflare allowlist. The application does not receive or store Google
 passwords, OAuth access tokens, profile photos, contacts, comments, analytics, advertising IDs, or
 viewing history. D1 stores a stable application-user ID, lowercased email address, current Access
-subject, creation timestamp, and last-seen timestamp. The email supports account identity and future
-server-side attribution; it is not displayed by the current UI.
+subject, creation timestamp, and last-seen timestamp. The email supports account identity and
+server-side administrator attribution; it is shown only in the administrator's review history.
 
 Cloudflare Access sets essential authentication cookies on the team and application domains. The
 configured session duration is seven days, subject to owner revocation and Cloudflare/Google policy.
-The browser requests the same-origin API and displays read-only collection metadata. The application
+The browser requests the same-origin API and displays read-only collection metadata. The one
+configured administrator can also search TMDB and save mapping decisions. D1 retains the reviewed
+product, ordered TMDB targets, administrator email snapshot, and decision timestamps. The application
 does not intentionally store visitor IP addresses or browser identifiers in D1.
 
 Cloudflare and Google may process sign-in and ordinary request metadata according to their account
@@ -25,7 +27,8 @@ page from controlling this application.
 
 ## Operator data
 
-The configured Blu-ray.com collection URL is treated as a secret because its numeric identifier can
+The configured administrator email, Blu-ray.com collection URL, TMDB token, and sync token are
+Worker-only secrets. The collection URL is treated as a secret because its numeric identifier can
 identify the owner's public collection. It is never sent to browsers. TMDB and sync tokens remain
 Worker-only bindings. Operational logs must contain event names, counts, phases, and request IDs—not
 secret values, authorization headers, or full private source URLs.

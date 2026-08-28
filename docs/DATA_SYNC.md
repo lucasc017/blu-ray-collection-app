@@ -3,13 +3,15 @@
 ## Phases
 
 1. `discover`: open the collection through Cloudflare Browser Run in recently-added order and upsert an incremental prefix without deactivating older releases. An owner-generated full snapshot remains available for authoritative replacement and removal detection.
-2. `resolve`: process pending releases in stable product-ID order. Reviewed overrides expand known sets and TV seasons. Other releases require one exact normalized TMDB movie/title-year match.
+2. `resolve`: process pending releases in stable product-ID order. Active D1-reviewed mappings expand known sets and TV seasons and always outrank automatic matching. Other releases require one exact normalized TMDB movie/title-year match.
 3. `refresh`: update owned TMDB metadata older than the configured TTL.
 4. `finalize`: mark the run and Eastern day complete and release the lease.
 
 Cron fires every 15 minutes in UTC. The engine calculates the `America/New_York` date and quarter-hour slot, and a new daily run starts at its selected slot. D1 prevents more than one completed run per local date and prevents overlap with a 20-minute recoverable lease.
 
 Every outbound request and retry consumes the per-invocation budget, capped at 40. A budget or transient provider failure keeps the run resumable. Unexpected internal failures mark the run failed. A protected manual request bypasses the selected time but does not duplicate an already completed day.
+
+The administrator review API uses a separate per-request fetch budget and never runs from ordinary collection requests. Saving a review validates every selected target first, then atomically appends the mapping revision, caches metadata, replaces ownership links, and resolves open issues. Discovery preserves active reviewed mappings across source fingerprint changes, and automatic resolution/issue writes recheck review state so they cannot clobber a concurrent administrator decision.
 
 `BLURAY_COLLECTION_URL` is a Worker secret so an open-source repository does not disclose the owner's collection. Validation requires the exact HTTPS collection path, an allowed Blu-ray.com host, and one numeric user ID. The Worker removes pagination and alternate-view parameters, enforces category 7, and selects `sortby=recentlyaddedcollection` without logging the resulting URL.
 
