@@ -2,7 +2,7 @@
 
 ## Mission
 
-Maintain a private physical media collection for explicitly allowlisted Google accounts. Cloudflare Access owns login and admission; D1 is the application source of truth; ordinary signed-in users must never trigger Blu-ray.com or TMDB calls. The one configured administrator may perform bounded, audited TMDB metadata reviews. V1 has no password login, suggestions, or client-side secrets.
+Maintain a private physical media collection for explicitly allowlisted Google accounts. Cloudflare Access owns login and admission; D1 is the application source of truth; ordinary signed-in collection and recommendation reads never trigger external calls. Signed-in users may perform bounded, user-initiated TMDB movie searches and new-recommendation validation, while the configured administrator may also perform bounded, audited TMDB metadata reviews. V1 has no password login or client-side secrets.
 
 ## Sources of truth
 
@@ -53,7 +53,7 @@ If documentation and code disagree, verify behavior with tests, then update both
 ## Architecture guardrails
 
 - One Cloudflare Worker deployment serves both the Vite SPA and `/api/*`; `/api/admin/*` requires the verified user email to match `ADMIN_EMAIL`.
-- D1 stores ownership, cached metadata, scheduling, leases, cursors, and issues.
+- D1 stores ownership, cached metadata, recommendations, endorsements, scheduling, leases, cursors, and issues.
 - Scheduled work is resumable and stays within a 40-request invocation budget.
 - TV ownership is season-level. Movie box sets expand to individual movies.
 - Keep the browser thin: React Router, native fetch, URL-backed filters, and no global state library unless a demonstrated need is documented.

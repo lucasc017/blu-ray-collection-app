@@ -178,6 +178,50 @@ export interface SaveMetadataReviewResponse {
   targets: MetadataReviewTarget[];
 }
 
+export type RecommendationSort = "newest" | "endorsements" | "title";
+
+export interface MovieRecommendation {
+  id: number;
+  tmdbId: number;
+  title: string;
+  overview: string;
+  releaseDate: string | null;
+  releaseYear: number | null;
+  posterPath: string | null;
+  createdAt: string;
+  recommendedBy: string;
+  supporters: string[];
+  endorsementCount: number;
+  endorsedByCurrentUser: boolean;
+}
+
+export interface ListMovieRecommendationsResponse {
+  items: MovieRecommendation[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface CreateMovieRecommendationRequest {
+  tmdbId: number;
+}
+
+export interface CreateMovieRecommendationResponse {
+  recommendation: MovieRecommendation;
+  created: boolean;
+}
+
+export interface SetMovieRecommendationEndorsementRequest {
+  endorsed: boolean;
+}
+
+export interface SetMovieRecommendationEndorsementResponse {
+  recommendation: MovieRecommendation | null;
+  removed: boolean;
+}
+
+export type RecommendationSearchResponse = TmdbReviewSearchResponse;
+
 export function titlePath(
   entry: Pick<CollectionEntry, "mediaType" | "tmdbId" | "seasonNumber">,
 ): string {

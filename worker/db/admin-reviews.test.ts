@@ -8,6 +8,7 @@ import {
   StaleMetadataReviewError,
 } from "./admin-reviews";
 import { upsertAppUser } from "./users";
+import { createMovieRecommendation, getRecommendationState } from "./recommendations";
 import type { TitleMetadata } from "../sync/types";
 
 const now = "2026-08-27T12:00:00.000Z";
@@ -87,6 +88,7 @@ describe("metadata review persistence", () => {
       { subject: "admin-subject", email: "admin@example.com" },
       now,
     );
+    await createMovieRecommendation(env.DB, movie(101, "First Film"), actor.id, actor.email, now);
     const result = await applyMetadataReview(env.DB, {
       productId: context.productId,
       expected: { issueId: context.issueId, revision: null },
@@ -107,6 +109,7 @@ describe("metadata review persistence", () => {
       .bind("271695")
       .all<{ tmdb_id: number }>();
     expect(ownership.results.map((row) => row.tmdb_id)).toEqual([101, 102]);
+    expect(await getRecommendationState(env.DB, 101)).toMatchObject({ fulfilledAt: now });
 
     const history = await listMetadataReviews(env.DB, "resolved", 1, 20);
     const item = history.items.find((candidate) => candidate.productId === "271695");

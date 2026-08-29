@@ -1,6 +1,8 @@
 import { SELF } from "cloudflare:test";
 import { env } from "cloudflare:workers";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("authenticated collection API", () => {
   beforeEach(async () => {
@@ -161,6 +163,137 @@ describe("authenticated collection API", () => {
     expect(response.status).toBe(401);
     const body = await response.json<{ error: { code: string } }>();
     expect(body.error.code).toBe("unauthorized");
+  });
+
+  it("searches, creates, endorses, lists, and deletes movie recommendations", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>((input) => {
+        const url = new URL(
+          typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url,
+        );
+        if (url.pathname.endsWith("/search/movie")) {
+          return Promise.resolve(
+            Response.json({
+              results: [
+                {
+                  id: 601,
+                  title: "Recommended Film",
+                  original_title: "Recommended Film",
+                  overview: "A community pick.",
+                  release_date: "2024-01-01",
+                  poster_path: "/recommended.jpg",
+                },
+              ],
+            }),
+          );
+        }
+        if (url.pathname.endsWith("/movie/601")) {
+          return Promise.resolve(
+            Response.json({
+              id: 601,
+              title: "Recommended Film",
+              original_title: "Recommended Film",
+              overview: "A community pick.",
+              release_date: "2024-01-01",
+              poster_path: "/recommended.jpg",
+              backdrop_path: null,
+              runtime: 105,
+              vote_average: 7.8,
+              genres: [{ id: 18, name: "Drama" }],
+            }),
+          );
+        }
+        return Promise.reject(new Error(`Unexpected outbound request: ${url.pathname}`));
+      }),
+    );
+
+    await SELF.fetch("http://localhost/api/session", { method: "PUT" });
+    const search = await SELF.fetch(
+      "http://localhost/api/recommendations/search?q=Recommended%20Film&year=2024",
+    );
+    expect(search.status).toBe(200);
+    await expect(search.json<{ items: Array<{ tmdbId: number }> }>()).resolves.toMatchObject({
+      items: [{ tmdbId: 601 }],
+    });
+
+    const created = await SELF.fetch("http://localhost/api/recommendations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tmdbId: 601 }),
+    });
+    expect(created.status).toBe(201);
+    const createdBody = await created.json<{
+      created: boolean;
+      recommendation: { id: number; recommendedBy: string; endorsementCount: number };
+    }>();
+    expect(createdBody).toMatchObject({
+      created: true,
+      recommendation: {
+        recommendedBy: "developer",
+        endorsementCount: 1,
+      },
+    });
+
+    const duplicate = await SELF.fetch("http://localhost/api/recommendations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tmdbId: 601 }),
+    });
+    expect(duplicate.status).toBe(200);
+    await expect(duplicate.json<{ created: boolean }>()).resolves.toMatchObject({ created: false });
+
+    const list = await SELF.fetch("http://localhost/api/recommendations?sort=endorsements");
+    await expect(
+      list.json<{ total: number; items: Array<{ supporters: string[] }> }>(),
+    ).resolves.toMatchObject({
+      total: 1,
+      items: [{ supporters: ["developer"] }],
+    });
+
+    const withdrawn = await SELF.fetch(
+      `http://localhost/api/recommendations/${createdBody.recommendation.id}/endorsement`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endorsed: false }),
+      },
+    );
+    await expect(withdrawn.json<{ removed: boolean }>()).resolves.toEqual({
+      recommendation: null,
+      removed: true,
+    });
+
+    const recreated = await SELF.fetch("http://localhost/api/recommendations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tmdbId: 601 }),
+    });
+    const recreatedBody = await recreated.json<{ recommendation: { id: number } }>();
+    const deleted = await SELF.fetch(
+      `http://localhost/api/admin/recommendations/${recreatedBody.recommendation.id}`,
+      { method: "DELETE" },
+    );
+    expect(deleted.status).toBe(204);
+    expect(await deleted.text()).toBe("");
+  });
+
+  it("validates recommendation queries and mutation bodies", async () => {
+    const query = await SELF.fetch("http://localhost/api/recommendations?sort=popular");
+    expect(query.status).toBe(400);
+    await expect(query.json<{ error: { code: string } }>()).resolves.toMatchObject({
+      error: { code: "invalid_query" },
+    });
+
+    const body = await SELF.fetch("http://localhost/api/recommendations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tmdbId: 0 }),
+    });
+    expect(body.status).toBe(400);
+    await expect(body.json<{ error: { code: string } }>()).resolves.toMatchObject({
+      error: { code: "invalid_recommendation" },
+    });
   });
 
   it("imports a validated owner snapshot without exposing the collection URL", async () => {

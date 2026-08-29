@@ -13,6 +13,10 @@ assertions. Exact local HTTP loopback requests use a development identity.
 - `GET /titles/movie/:tmdbId`: returns one owned movie and its active releases.
 - `GET /titles/tv/:tmdbId/season/:seasonNumber`: returns one owned TV season and its active releases.
 - `GET /status`: returns collection counts, state, unresolved issue count, and last successful sync time.
+- `GET /recommendations`: accepts `sort=newest|endorsements|title`, `page`, and `pageSize` (maximum 60). Returns active movie recommendations, creator/supporter email usernames, unique endorsement counts, and the current user's endorsement state.
+- `GET /recommendations/search`: accepts `q` (2–100 characters) and optional `year`. Returns at most 20 first-page TMDB movie candidates through a bounded Worker-only lookup.
+- `POST /recommendations`: accepts `{ tmdbId }`. A new movie is validated and cached from TMDB, creates one recommendation plus the creator's endorsement, and returns `201`. An existing active recommendation is endorsed idempotently and returns `200`. Owned or permanently fulfilled movies return `409`.
+- `PUT /recommendations/:recommendationId/endorsement`: accepts `{ endorsed: boolean }`. It idempotently adds or removes the current user's endorsement. Removing the final endorsement deletes the recommendation.
 
 ## Administrator routes
 
@@ -22,6 +26,7 @@ All `/admin/*` routes require a user principal whose normalized verified email e
 - `GET /admin/tmdb/search`: accepts `mediaType=movie|tv`, `q` (2–100 characters), and optional `year`. Returns at most 20 first-page TMDB candidates.
 - `GET /admin/tmdb/tv/:tmdbId/seasons`: returns the bounded season list for one TMDB series.
 - `PUT /admin/reviews/:productId`: accepts an expected issue or active revision and 1–20 unique ordered movie/TV-season targets. The Worker validates every target through TMDB, writes metadata and ownership atomically, resolves open issues, and appends an audit revision. Stale expected state returns `409` without replacing the mapping.
+- `DELETE /admin/recommendations/:recommendationId`: permanently deletes one recommendation and all endorsements, returning `204`.
 
 ## Internal route
 

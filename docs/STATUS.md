@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 ## Implemented
 
@@ -47,13 +47,21 @@ Last updated: 2026-08-27
 - Sync precedence and write-time guards that preserve active reviewed mappings across discovery
   changes and prevent automatic resolution/issues from clobbering an administrator decision.
 - Browser, Worker, D1, migration, authorization, remap, stale-write, and sync-race coverage.
+- Signed-in `/recommendations` page with bounded TMDB movie search, canonical movie creation,
+  visible email usernames, unique toggleable endorsements, URL-backed newest/most-endorsed/title
+  sorting, pagination, and accessible network states.
+- Forward migration `0004_movie_recommendations.sql`, permanent fulfillment when sync or review
+  establishes ownership, last-vote cleanup, and administrator-confirmed cascade deletion.
+- Shared recommendation contracts, prepared D1 repository, authenticated API routes, and browser,
+  Workerd, migration, fulfillment, validation, and authorization coverage.
 
-This implementation did not install `ADMIN_EMAIL`, apply migration `0003`, deploy a Worker version,
-or mutate production review data. Those remain distinct owner-authorized production actions.
+This implementation did not install `ADMIN_EMAIL`, apply migrations `0003` or `0004`, deploy a Worker
+version, or mutate production review/recommendation data. Those remain distinct owner-authorized
+production actions.
 
 ## Remaining operational work
 
-- Install `ADMIN_EMAIL`, privately back up D1 if desired, apply migration `0003`, deploy the validated
+- Install `ADMIN_EMAIL`, privately back up D1 if desired, apply migrations `0003` then `0004`, deploy the validated
   build, and run admin/non-admin/service-principal smoke tests as distinct authorized operations.
 - Review the unresolved mappings through the new administrator screen after rollout.
 - Observe a completed Cron-initiated daily run on `workers.dev` and record measured CPU/fetch behavior.

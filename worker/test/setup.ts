@@ -5,6 +5,8 @@ import { beforeEach } from "vitest";
 beforeEach(async () => {
   await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
   await env.DB.batch([
+    env.DB.prepare("DELETE FROM movie_recommendation_endorsements"),
+    env.DB.prepare("DELETE FROM movie_recommendations"),
     env.DB.prepare(
       `DELETE FROM release_mapping_review_targets
        WHERE review_revision_id IN (

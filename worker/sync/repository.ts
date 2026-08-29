@@ -1,4 +1,6 @@
 import { MAPPING_REVISION } from "./mapping-revision";
+import { recommendationFulfillmentStatement } from "../db/recommendations";
+import { upsertTitleMetadata } from "../db/title-metadata";
 import type {
   MappingTarget,
   ParsedRelease,
@@ -149,7 +151,11 @@ export class SyncRepository {
     );
 
     for (let start = 0; start < statements.length; start += 75) {
-      await this.db.batch(statements.slice(start, start + 75));
+      const fulfillment = recommendationFulfillmentStatement(this.db, timestamp);
+      await this.db.batch([
+        ...statements.slice(start, start + 75),
+        ...(fulfillment ? [fulfillment] : []),
+      ]);
     }
   }
 
@@ -215,60 +221,7 @@ export class SyncRepository {
   }
 
   async upsertTitle(metadata: TitleMetadata): Promise<number> {
-    const result = await this.db
-      .prepare(
-        `INSERT INTO titles
-        (media_type, tmdb_id, season_number, display_title, original_title, sort_title,
-         overview, release_date, release_year, poster_path, backdrop_path, runtime_minutes,
-         episode_count, vote_average, metadata_updated_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(media_type, tmdb_id, season_number) DO UPDATE SET
-          display_title = excluded.display_title,
-          original_title = excluded.original_title,
-          sort_title = excluded.sort_title,
-          overview = excluded.overview,
-          release_date = excluded.release_date,
-          release_year = excluded.release_year,
-          poster_path = excluded.poster_path,
-          backdrop_path = excluded.backdrop_path,
-          runtime_minutes = excluded.runtime_minutes,
-          episode_count = excluded.episode_count,
-          vote_average = excluded.vote_average,
-          metadata_updated_at = excluded.metadata_updated_at,
-          updated_at = excluded.updated_at
-        RETURNING id`,
-      )
-      .bind(
-        metadata.mediaType,
-        metadata.tmdbId,
-        metadata.seasonNumber,
-        metadata.displayTitle,
-        metadata.originalTitle,
-        metadata.sortTitle,
-        metadata.overview,
-        metadata.releaseDate,
-        metadata.releaseYear,
-        metadata.posterPath,
-        metadata.backdropPath,
-        metadata.runtimeMinutes,
-        metadata.episodeCount,
-        metadata.voteAverage,
-        metadata.metadataUpdatedAt,
-        metadata.metadataUpdatedAt,
-      )
-      .first<{ id: number }>();
-    if (!result) throw new Error("TMDB metadata could not be stored.");
-
-    const genreStatements = [
-      this.db.prepare("DELETE FROM title_genres WHERE title_id = ?").bind(result.id),
-      ...metadata.genres.map((genre) =>
-        this.db
-          .prepare("INSERT INTO title_genres (title_id, tmdb_genre_id, name) VALUES (?, ?, ?)")
-          .bind(result.id, genre.id, genre.name),
-      ),
-    ];
-    await this.db.batch(genreStatements);
-    return result.id;
+    return upsertTitleMetadata(this.db, metadata);
   }
 
   async resolveRelease(
@@ -290,6 +243,7 @@ export class SyncRepository {
         : "";
     const guardedProductBindings =
       source === "automatic" ? [release.product_id, release.product_id] : [release.product_id];
+    const fulfillment = recommendationFulfillmentStatement(this.db, timestamp, titleIds);
     await this.db.batch([
       this.db
         .prepare(`DELETE FROM source_release_titles WHERE product_id = ? ${automaticGuard}`)
@@ -333,6 +287,7 @@ export class SyncRepository {
           WHERE id = ?`,
         )
         .bind(release.product_id, timestamp, runId),
+      ...(fulfillment ? [fulfillment] : []),
     ]);
   }
 

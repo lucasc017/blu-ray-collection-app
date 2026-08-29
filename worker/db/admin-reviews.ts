@@ -9,6 +9,7 @@ import type {
 } from "../../shared/contracts";
 import { normalizeBluRayReleaseUrl } from "../../shared/security";
 import type { MappingTarget, TitleMetadata } from "../sync/types";
+import { titleMetadataStatements } from "./title-metadata";
 
 interface ReviewReleaseRow {
   product_id: string;
@@ -219,70 +220,6 @@ export function reviewContextMatches(
   return context.issueId === expected.issueId && context.revision === expected.revision;
 }
 
-function titleUpsertStatement(db: D1Database, metadata: TitleMetadata): D1PreparedStatement {
-  return db
-    .prepare(
-      `INSERT INTO titles
-      (media_type, tmdb_id, season_number, display_title, original_title, sort_title,
-       overview, release_date, release_year, poster_path, backdrop_path, runtime_minutes,
-       episode_count, vote_average, metadata_updated_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(media_type, tmdb_id, season_number) DO UPDATE SET
-        display_title = excluded.display_title,
-        original_title = excluded.original_title,
-        sort_title = excluded.sort_title,
-        overview = excluded.overview,
-        release_date = excluded.release_date,
-        release_year = excluded.release_year,
-        poster_path = excluded.poster_path,
-        backdrop_path = excluded.backdrop_path,
-        runtime_minutes = excluded.runtime_minutes,
-        episode_count = excluded.episode_count,
-        vote_average = excluded.vote_average,
-        metadata_updated_at = excluded.metadata_updated_at,
-        updated_at = excluded.updated_at`,
-    )
-    .bind(
-      metadata.mediaType,
-      metadata.tmdbId,
-      metadata.seasonNumber,
-      metadata.displayTitle,
-      metadata.originalTitle,
-      metadata.sortTitle,
-      metadata.overview,
-      metadata.releaseDate,
-      metadata.releaseYear,
-      metadata.posterPath,
-      metadata.backdropPath,
-      metadata.runtimeMinutes,
-      metadata.episodeCount,
-      metadata.voteAverage,
-      metadata.metadataUpdatedAt,
-      metadata.metadataUpdatedAt,
-    );
-}
-
-function genreInsertStatement(db: D1Database, metadata: TitleMetadata): D1PreparedStatement | null {
-  if (metadata.genres.length === 0) return null;
-  const seed = metadata.genres
-    .map((_, index) => (index === 0 ? "SELECT ? AS id, ? AS name" : "UNION ALL SELECT ?, ?"))
-    .join(" ");
-  return db
-    .prepare(
-      `INSERT OR REPLACE INTO title_genres (title_id, tmdb_genre_id, name)
-       SELECT t.id, seed.id, seed.name
-       FROM titles t
-       CROSS JOIN (${seed}) seed
-       WHERE t.media_type = ? AND t.tmdb_id = ? AND t.season_number = ?`,
-    )
-    .bind(
-      ...metadata.genres.flatMap((genre) => [genre.id, genre.name]),
-      metadata.mediaType,
-      metadata.tmdbId,
-      metadata.seasonNumber,
-    );
-}
-
 function mappingTarget(metadata: TitleMetadata): MetadataReviewTarget {
   return {
     mediaType: metadata.mediaType,
@@ -359,30 +296,7 @@ export async function applyMetadataReview(
       ),
   );
 
-  for (const metadata of input.metadata) statements.push(titleUpsertStatement(db, metadata));
-
-  const genreDeleteWhere = input.metadata
-    .map(() => "(media_type = ? AND tmdb_id = ? AND season_number = ?)")
-    .join(" OR ");
-  statements.push(
-    db
-      .prepare(
-        `DELETE FROM title_genres WHERE title_id IN (
-          SELECT id FROM titles WHERE ${genreDeleteWhere}
-        )`,
-      )
-      .bind(
-        ...input.metadata.flatMap((metadata) => [
-          metadata.mediaType,
-          metadata.tmdbId,
-          metadata.seasonNumber,
-        ]),
-      ),
-  );
-  for (const metadata of input.metadata) {
-    const genreStatement = genreInsertStatement(db, metadata);
-    if (genreStatement) statements.push(genreStatement);
-  }
+  for (const metadata of input.metadata) statements.push(...titleMetadataStatements(db, metadata));
 
   const [first, ...remaining] = input.metadata;
   if (!first) throw new Error("At least one reviewed title is required.");
@@ -461,6 +375,30 @@ export async function applyMetadataReview(
         "UPDATE sync_issues SET resolved_at = ? WHERE product_id = ? AND resolved_at IS NULL",
       )
       .bind(input.now, input.productId),
+  );
+  const fulfillmentWhere = input.metadata
+    .map(() => "(media_type = ? AND tmdb_id = ? AND season_number = ?)")
+    .join(" OR ");
+  statements.push(
+    db
+      .prepare(
+        `UPDATE movie_recommendations SET fulfilled_at = ?
+         WHERE fulfilled_at IS NULL AND title_id IN (
+           SELECT id FROM titles WHERE ${fulfillmentWhere}
+         ) AND EXISTS (
+           SELECT 1 FROM source_release_titles srt
+           JOIN source_releases sr ON sr.product_id = srt.product_id
+           WHERE srt.title_id = movie_recommendations.title_id AND sr.active = 1
+         )`,
+      )
+      .bind(
+        input.now,
+        ...input.metadata.flatMap((metadata) => [
+          metadata.mediaType,
+          metadata.tmdbId,
+          metadata.seasonNumber,
+        ]),
+      ),
   );
 
   try {

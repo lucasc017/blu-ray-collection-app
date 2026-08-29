@@ -1126,6 +1126,180 @@ main {
   line-height: 1.6;
 }
 
+.recommendations-page {
+  width: var(--content);
+  margin: 0 auto;
+  padding: 56px 0 80px;
+}
+
+.recommendations-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.recommendations-heading h1,
+.recommendation-search-panel h2 {
+  margin: 0;
+}
+
+.recommendations-heading > div > p:last-child {
+  color: var(--muted);
+  max-width: 680px;
+  line-height: 1.6;
+}
+
+.recommendation-sort {
+  min-width: 180px;
+}
+
+.recommendation-search-panel {
+  margin: 32px 0;
+  padding: 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.recommendation-search {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 140px auto;
+  align-items: end;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.recommendation-search-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.3rem;
+}
+
+.recommendation-search-result {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-raised);
+}
+
+.recommendation-search-result img,
+.recommendation-search-result > .poster-placeholder {
+  width: 96px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 9px;
+}
+
+.recommendation-search-result h3,
+.recommendation-search-result p {
+  margin-top: 0;
+}
+
+.recommendation-search-result > div > p:not(.muted) {
+  color: var(--muted);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.recommendation-card {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.recommendation-poster {
+  min-height: 225px;
+  background: var(--surface-raised);
+}
+
+.recommendation-poster img,
+.recommendation-poster .poster-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 225px;
+  object-fit: cover;
+}
+
+.recommendation-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.15rem;
+}
+
+.recommendation-card h2,
+.recommendation-card p {
+  margin: 0;
+}
+
+.recommendation-card h2 {
+  font-size: 1.35rem;
+}
+
+.recommendation-overview {
+  color: var(--muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.recommendation-people {
+  display: grid;
+  gap: 0.65rem;
+  margin: auto 0 0;
+}
+
+.recommendation-people div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.recommendation-people dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.recommendation-people dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.recommendation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+button.danger {
+  border-color: rgba(255, 111, 111, 0.5);
+  background: rgba(126, 35, 35, 0.45);
+  color: #ffd6d6;
+}
+
+.recommendation-pagination {
+  margin-top: 2rem;
+}
+
 @media (max-width: 1180px) {
   .poster-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1176,6 +1350,11 @@ main {
 
   .review-search {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .recommendation-grid,
+  .recommendation-search-results {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1279,6 +1458,34 @@ main {
 
   .target-actions {
     flex-wrap: wrap;
+  }
+
+  .recommendations-page {
+    padding-top: 36px;
+  }
+
+  .recommendations-heading,
+  .recommendation-search {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .recommendations-heading {
+    flex-direction: column;
+  }
+
+  .recommendation-sort {
+    width: 100%;
+  }
+
+  .recommendation-card {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+
+  .recommendation-poster,
+  .recommendation-poster img,
+  .recommendation-poster .poster-placeholder {
+    min-height: 168px;
   }
 }
 

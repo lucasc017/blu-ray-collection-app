@@ -1,12 +1,18 @@
 import type {
   ApiErrorBody,
   AuthenticatedUser,
+  CreateMovieRecommendationRequest,
+  CreateMovieRecommendationResponse,
   ListTitlesResponse,
+  ListMovieRecommendationsResponse,
   MetadataReviewListResponse,
   MetadataReviewStatus,
   SaveMetadataReviewRequest,
   SaveMetadataReviewResponse,
+  SetMovieRecommendationEndorsementRequest,
+  SetMovieRecommendationEndorsementResponse,
   SyncStatus,
+  RecommendationSearchResponse,
   TmdbReviewSearchResponse,
   TmdbReviewSeasonsResponse,
   TitleDetails,
@@ -26,7 +32,11 @@ export class ApiError extends Error {
 
 async function request<T>(
   path: string,
-  options: { method?: "GET" | "PUT"; signal?: AbortSignal; body?: unknown } = {},
+  options: {
+    method?: "GET" | "POST" | "PUT" | "DELETE";
+    signal?: AbortSignal;
+    body?: unknown;
+  } = {},
 ): Promise<T> {
   const headers = new Headers({
     Accept: "application/json",
@@ -50,6 +60,7 @@ async function request<T>(
     const body = (await response.json().catch(() => fallback)) as ApiErrorBody;
     throw new ApiError(body.error.message, body.error.code, body.error.requestId, response.status);
   }
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
 
@@ -94,6 +105,45 @@ export const reviewApi = {
     return request<SaveMetadataReviewResponse>(`/api/admin/reviews/${productId}`, {
       method: "PUT",
       body: input,
+      signal,
+    });
+  },
+};
+
+export const recommendationApi = {
+  list(query: URLSearchParams, signal?: AbortSignal) {
+    return request<ListMovieRecommendationsResponse>(`/api/recommendations?${query.toString()}`, {
+      signal,
+    });
+  },
+  search(query: string, year: string, signal?: AbortSignal) {
+    const parameters = new URLSearchParams({ q: query });
+    if (year) parameters.set("year", year);
+    return request<RecommendationSearchResponse>(
+      `/api/recommendations/search?${parameters.toString()}`,
+      { signal },
+    );
+  },
+  create(input: CreateMovieRecommendationRequest, signal?: AbortSignal) {
+    return request<CreateMovieRecommendationResponse>("/api/recommendations", {
+      method: "POST",
+      body: input,
+      signal,
+    });
+  },
+  setEndorsement(
+    recommendationId: number,
+    input: SetMovieRecommendationEndorsementRequest,
+    signal?: AbortSignal,
+  ) {
+    return request<SetMovieRecommendationEndorsementResponse>(
+      `/api/recommendations/${recommendationId}/endorsement`,
+      { method: "PUT", body: input, signal },
+    );
+  },
+  delete(recommendationId: number, signal?: AbortSignal) {
+    return request<void>(`/api/admin/recommendations/${recommendationId}`, {
+      method: "DELETE",
       signal,
     });
   },

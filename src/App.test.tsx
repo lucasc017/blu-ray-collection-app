@@ -16,6 +16,17 @@ const baseUser: AuthenticatedUser = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("admin route authorization", () => {
+  it("links the recommendation page for every signed-in user", () => {
+    render(
+      <SessionContext value={baseUser}>
+        <MemoryRouter initialEntries={["/about"]}>
+          <App />
+        </MemoryRouter>
+      </SessionContext>,
+    );
+    expect(screen.getByRole("link", { name: "Recommendations" })).toBeVisible();
+  });
+
   it("does not render or link the review screen for an ordinary signed-in user", () => {
     render(
       <SessionContext value={baseUser}>

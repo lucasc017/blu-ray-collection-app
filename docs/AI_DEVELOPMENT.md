@@ -32,8 +32,9 @@ repository without replacing the binding instructions in the root or nested `AGE
 ## Architectural invariants
 
 - One Cloudflare Worker serves the SPA and `/api/*`.
-- Signed-in user requests read D1 only. Blu-ray.com and TMDB calls occur only in Cron or authenticated
-  operator flows.
+- Signed-in collection and recommendation reads use D1 only. TMDB calls may occur for bounded,
+  user-initiated movie recommendation search/validation and authenticated operator flows;
+  Blu-ray.com calls remain limited to authorized sync flows.
 - Cloudflare Access owns the exact-email allowlist. The Worker validates every API assertion and
   separates user principals from service-token principals; D1 `app_users` rows never grant access.
 - D1 owns durable state, leases, cursors, issues, and cached metadata. Do not rely on module memory.

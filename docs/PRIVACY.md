@@ -6,13 +6,17 @@ The application uses Google sign-in through Cloudflare Access and is available o
 addresses on the owner's Cloudflare allowlist. The application does not receive or store Google
 passwords, OAuth access tokens, profile photos, contacts, comments, analytics, advertising IDs, or
 viewing history. D1 stores a stable application-user ID, lowercased email address, current Access
-subject, creation timestamp, and last-seen timestamp. The email supports account identity and
-server-side administrator attribution; it is shown only in the administrator's review history.
+subject, creation timestamp, and last-seen timestamp. The email supports account identity,
+recommendation attribution, and server-side administrator attribution. Recommendation APIs and
+cards show only the portion before `@` for creators and current supporters; full addresses remain
+limited to the signed-in user's session response and administrator review history.
 
 Cloudflare Access sets essential authentication cookies on the team and application domains. The
 configured session duration is seven days, subject to owner revocation and Cloudflare/Google policy.
 The browser requests the same-origin API and displays read-only collection metadata. The one
-configured administrator can also search TMDB and save mapping decisions. D1 retains the reviewed
+configured administrator can also search TMDB and save mapping decisions. Signed-in users can submit
+bounded movie-title searches to TMDB through the Worker and store recommendations and endorsements;
+the TMDB token remains Worker-only. D1 retains the reviewed
 product, ordered TMDB targets, administrator email snapshot, and decision timestamps. The application
 does not intentionally store visitor IP addresses or browser identifiers in D1.
 

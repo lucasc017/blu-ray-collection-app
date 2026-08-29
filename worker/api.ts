@@ -1,6 +1,12 @@
 import { Hono, type Context } from "hono";
 import { z } from "zod";
-import type { ApiErrorBody, MediaType, SaveMetadataReviewRequest } from "../shared/contracts";
+import type {
+  ApiErrorBody,
+  CreateMovieRecommendationRequest,
+  MediaType,
+  SaveMetadataReviewRequest,
+  SetMovieRecommendationEndorsementRequest,
+} from "../shared/contracts";
 import {
   AccessAuthenticationError,
   authenticateRequest,
@@ -18,6 +24,14 @@ import {
   StaleMetadataReviewError,
 } from "./db/admin-reviews";
 import { getSyncStatus, getTitleDetails, listTitles } from "./db/public-queries";
+import {
+  createMovieRecommendation,
+  deleteMovieRecommendation,
+  getRecommendationState,
+  listMovieRecommendations,
+  RecommendationUnavailableError,
+  setMovieRecommendationEndorsement,
+} from "./db/recommendations";
 import { upsertAppUser } from "./db/users";
 import { logEvent } from "./logging";
 import { applyApiSecurityHeaders } from "./security-headers";
@@ -47,6 +61,7 @@ const positiveIdSchema = z.coerce.number().int().positive();
 const seasonSchema = z.coerce.number().int().min(0);
 const MAX_SNAPSHOT_BODY_BYTES = 512 * 1024;
 const MAX_REVIEW_BODY_BYTES = 32 * 1024;
+const MAX_RECOMMENDATION_BODY_BYTES = 4 * 1024;
 const productIdSchema = z.string().regex(/^[1-9]\d{0,19}$/);
 const reviewListQuerySchema = z.object({
   status: z.enum(["unresolved", "resolved"]).default("unresolved"),
@@ -58,6 +73,17 @@ const tmdbSearchQuerySchema = z.object({
   q: z.string().trim().min(2).max(100),
   year: z.coerce.number().int().min(1880).max(2200).optional(),
 });
+const recommendationListQuerySchema = z.object({
+  sort: z.enum(["newest", "endorsements", "title"]).default("newest"),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(60).default(24),
+});
+const recommendationSearchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(100),
+  year: z.coerce.number().int().min(1880).max(2200).optional(),
+});
+const createRecommendationSchema = z.object({ tmdbId: z.number().int().positive() });
+const endorsementSchema = z.object({ endorsed: z.boolean() });
 const movieReviewTargetSchema = z.object({
   mediaType: z.literal("movie"),
   tmdbId: z.number().int().positive(),
@@ -211,6 +237,265 @@ api.put("/session", async (c) => {
     mayUseAdminRoutes(c.get("principal"), c.env.ADMIN_EMAIL),
   ]);
   return c.json({ ...user, isAdmin });
+});
+
+api.get("/recommendations", async (c) => {
+  const parsed = recommendationListQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) {
+    return c.json(
+      errorBody(
+        "invalid_query",
+        "One or more recommendation filters are invalid.",
+        c.get("requestId"),
+      ),
+      400,
+    );
+  }
+  const identity = userIdentity(c.get("principal"));
+  if (!identity) {
+    return c.json(errorBody("forbidden", "A signed-in user is required.", c.get("requestId")), 403);
+  }
+  return c.json(
+    await listMovieRecommendations(
+      c.env.DB,
+      identity.email,
+      parsed.data.sort,
+      parsed.data.page,
+      parsed.data.pageSize,
+    ),
+  );
+});
+
+api.get("/recommendations/search", async (c) => {
+  const parsed = recommendationSearchQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) {
+    return c.json(
+      errorBody("invalid_query", "The movie search parameters are invalid.", c.get("requestId")),
+      400,
+    );
+  }
+  const configuration = validateSyncConfiguration(c.env);
+  const tmdb = new TmdbClient(
+    configuration.tmdbApiBaseUrl,
+    configuration.tmdbReadAccessToken,
+    new FetchBudget(3),
+  );
+  try {
+    return c.json(await tmdb.search("movie", parsed.data.q, parsed.data.year));
+  } catch (error) {
+    if (!(error instanceof ExternalFetchError || error instanceof FetchBudgetExceededError)) {
+      throw error;
+    }
+    return c.json(
+      errorBody(
+        "tmdb_unavailable",
+        "TMDB could not complete that movie search.",
+        c.get("requestId"),
+      ),
+      502,
+    );
+  }
+});
+
+api.post("/recommendations", async (c) => {
+  if (!(c.req.header("content-type") ?? "").toLowerCase().startsWith("application/json")) {
+    return c.json(
+      errorBody("unsupported_media_type", "A JSON body is required.", c.get("requestId")),
+      415,
+    );
+  }
+  let input: CreateMovieRecommendationRequest;
+  try {
+    const parsed = createRecommendationSchema.safeParse(
+      JSON.parse(await readBodyBounded(c.req.raw, MAX_RECOMMENDATION_BODY_BYTES)),
+    );
+    if (!parsed.success) {
+      return c.json(
+        errorBody(
+          "invalid_recommendation",
+          "The movie recommendation is invalid.",
+          c.get("requestId"),
+        ),
+        400,
+      );
+    }
+    input = parsed.data;
+  } catch (error) {
+    const tooLarge = error instanceof SnapshotBodyTooLargeError;
+    return c.json(
+      errorBody(
+        tooLarge ? "payload_too_large" : "invalid_recommendation",
+        tooLarge
+          ? "The recommendation body is too large."
+          : "The recommendation body is not valid JSON.",
+        c.get("requestId"),
+      ),
+      tooLarge ? 413 : 400,
+    );
+  }
+
+  const identity = userIdentity(c.get("principal"));
+  if (!identity) {
+    return c.json(errorBody("forbidden", "A signed-in user is required.", c.get("requestId")), 403);
+  }
+  const now = new Date().toISOString();
+  const actor = await upsertAppUser(c.env.DB, identity, now);
+  const existing = await getRecommendationState(c.env.DB, input.tmdbId);
+  if (existing?.owned) {
+    return c.json(
+      errorBody("already_owned", "That movie is already in the collection.", c.get("requestId")),
+      409,
+    );
+  }
+  if (existing?.fulfilledAt) {
+    return c.json(
+      errorBody(
+        "recommendation_fulfilled",
+        "That movie recommendation was already fulfilled.",
+        c.get("requestId"),
+      ),
+      409,
+    );
+  }
+  if (existing?.recommendationId) {
+    const result = await setMovieRecommendationEndorsement(
+      c.env.DB,
+      existing.recommendationId,
+      actor.id,
+      actor.email,
+      true,
+      now,
+    );
+    if (!result?.recommendation)
+      throw new Error("The existing recommendation could not be endorsed.");
+    return c.json({ recommendation: result.recommendation, created: false });
+  }
+
+  const configuration = validateSyncConfiguration(c.env);
+  const tmdb = new TmdbClient(
+    configuration.tmdbApiBaseUrl,
+    configuration.tmdbReadAccessToken,
+    new FetchBudget(3),
+  );
+  try {
+    const metadata = await tmdb.fetchMetadata({
+      mediaType: "movie",
+      tmdbId: input.tmdbId,
+      seasonNumber: -1,
+    });
+    const result = await createMovieRecommendation(c.env.DB, metadata, actor.id, actor.email, now);
+    return c.json(result, result.created ? 201 : 200);
+  } catch (error) {
+    if (error instanceof RecommendationUnavailableError) {
+      const fulfilled = error.reason === "fulfilled";
+      return c.json(
+        errorBody(
+          fulfilled ? "recommendation_fulfilled" : "already_owned",
+          fulfilled
+            ? "That movie recommendation was already fulfilled."
+            : "That movie is already in the collection.",
+          c.get("requestId"),
+        ),
+        409,
+      );
+    }
+    if (error instanceof ExternalFetchError || error instanceof FetchBudgetExceededError) {
+      return c.json(
+        errorBody("tmdb_unavailable", "TMDB could not validate that movie.", c.get("requestId")),
+        502,
+      );
+    }
+    throw error;
+  }
+});
+
+api.put("/recommendations/:recommendationId/endorsement", async (c) => {
+  const recommendationId = positiveIdSchema.safeParse(c.req.param("recommendationId"));
+  if (!recommendationId.success) {
+    return c.json(
+      errorBody("invalid_id", "The recommendation ID is invalid.", c.get("requestId")),
+      400,
+    );
+  }
+  if (!(c.req.header("content-type") ?? "").toLowerCase().startsWith("application/json")) {
+    return c.json(
+      errorBody("unsupported_media_type", "A JSON body is required.", c.get("requestId")),
+      415,
+    );
+  }
+  let input: SetMovieRecommendationEndorsementRequest;
+  try {
+    const parsed = endorsementSchema.safeParse(
+      JSON.parse(await readBodyBounded(c.req.raw, MAX_RECOMMENDATION_BODY_BYTES)),
+    );
+    if (!parsed.success) {
+      return c.json(
+        errorBody("invalid_endorsement", "The endorsement state is invalid.", c.get("requestId")),
+        400,
+      );
+    }
+    input = parsed.data;
+  } catch (error) {
+    const tooLarge = error instanceof SnapshotBodyTooLargeError;
+    return c.json(
+      errorBody(
+        tooLarge ? "payload_too_large" : "invalid_endorsement",
+        tooLarge ? "The endorsement body is too large." : "The endorsement body is not valid JSON.",
+        c.get("requestId"),
+      ),
+      tooLarge ? 413 : 400,
+    );
+  }
+  const identity = userIdentity(c.get("principal"));
+  if (!identity) {
+    return c.json(errorBody("forbidden", "A signed-in user is required.", c.get("requestId")), 403);
+  }
+  const now = new Date().toISOString();
+  const actor = await upsertAppUser(c.env.DB, identity, now);
+  try {
+    const result = await setMovieRecommendationEndorsement(
+      c.env.DB,
+      recommendationId.data,
+      actor.id,
+      actor.email,
+      input.endorsed,
+      now,
+    );
+    if (!result) {
+      return c.json(
+        errorBody("not_found", "That recommendation was not found.", c.get("requestId")),
+        404,
+      );
+    }
+    return c.json(result);
+  } catch (error) {
+    if (!(error instanceof RecommendationUnavailableError)) throw error;
+    return c.json(
+      errorBody(
+        error.reason === "owned" ? "already_owned" : "recommendation_fulfilled",
+        "That recommendation is no longer active.",
+        c.get("requestId"),
+      ),
+      409,
+    );
+  }
+});
+
+api.delete("/admin/recommendations/:recommendationId", async (c) => {
+  const recommendationId = positiveIdSchema.safeParse(c.req.param("recommendationId"));
+  if (!recommendationId.success) {
+    return c.json(
+      errorBody("invalid_id", "The recommendation ID is invalid.", c.get("requestId")),
+      400,
+    );
+  }
+  if (!(await deleteMovieRecommendation(c.env.DB, recommendationId.data))) {
+    return c.json(
+      errorBody("not_found", "That recommendation was not found.", c.get("requestId")),
+      404,
+    );
+  }
+  return c.body(null, 204);
 });
 
 api.get("/admin/reviews", async (c) => {

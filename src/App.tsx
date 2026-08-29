@@ -6,6 +6,7 @@ import { CollectionPage } from "./pages/CollectionPage";
 import { DetailPage } from "./pages/DetailPage";
 import { MetadataReviewPage } from "./pages/MetadataReviewPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { RecommendationsPage } from "./pages/RecommendationsPage";
 
 function AdminRoute() {
   return useSession().isAdmin ? <MetadataReviewPage /> : <NotFoundPage />;
@@ -19,6 +20,7 @@ export function App() {
         <Route path="title/movie/:tmdbId" element={<DetailPage />} />
         <Route path="title/tv/:tmdbId/season/:seasonNumber" element={<DetailPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="recommendations" element={<RecommendationsPage />} />
         <Route path="admin/review" element={<AdminRoute />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

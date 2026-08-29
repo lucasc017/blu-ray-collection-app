@@ -19,6 +19,7 @@ export function Layout() {
           <NavLink to="/" end>
             Collection
           </NavLink>
+          <NavLink to="/recommendations">Recommendations</NavLink>
           <NavLink to="/about">About</NavLink>
           {session.isAdmin ? <NavLink to="/admin/review">Metadata review</NavLink> : null}
           <a href="/cdn-cgi/access/logout">Sign out</a>

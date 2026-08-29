@@ -1,6 +1,6 @@
 # The Disc Shelf
 
-A private Blu-ray and 4K UHD collection browser for allowlisted Google accounts, with an owner-only metadata conflict review screen. Cloudflare Access owns sign-in and admission; React and Vite render the interface; a Hono Cloudflare Worker validates Access identity and serves the API and scheduled importer; D1 stores users, reviews, and the collection; TMDB supplies cached movie and TV-season metadata.
+A private Blu-ray and 4K UHD collection browser for allowlisted Google accounts, with shared movie recommendations and an owner-only metadata conflict review screen. Cloudflare Access owns sign-in and admission; React and Vite render the interface; a Hono Cloudflare Worker validates Access identity and serves the API and scheduled importer; D1 stores users, recommendations, reviews, and the collection; TMDB supplies cached movie and TV-season metadata.
 
 Production: [The Disc Shelf](https://blu-ray-collection-app.blu-ray-collection-app.workers.dev)
 
@@ -90,7 +90,7 @@ created.
 
 The browser has no password database, analytics, advertising cookies, or provider credentials.
 Cloudflare Access sets essential authentication cookies, and D1 stores the signed-in account's
-stable application ID, lowercased email, current Access subject, account timestamps, and administrator review history. TMDB poster
+stable application ID, lowercased email, current Access subject, account timestamps, movie endorsements, and administrator review history. Recommendation cards show only the email username before `@`, never the full address. TMDB poster
 and backdrop images load from `image.tmdb.org`; those requests disclose ordinary network metadata
 to TMDB. See [Privacy](docs/PRIVACY.md) and [Security](SECURITY.md).
 

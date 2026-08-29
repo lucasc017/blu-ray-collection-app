@@ -13,6 +13,10 @@ Every outbound request and retry consumes the per-invocation budget, capped at 4
 
 The administrator review API uses a separate per-request fetch budget and never runs from ordinary collection requests. Saving a review validates every selected target first, then atomically appends the mapping revision, caches metadata, replaces ownership links, and resolves open issues. Discovery preserves active reviewed mappings across source fingerprint changes, and automatic resolution/issue writes recheck review state so they cannot clobber a concurrent administrator decision.
 
+When automatic resolution or an administrator review creates an active ownership link for a movie,
+the same atomic D1 batch permanently fulfills any matching movie recommendation. Later source-release
+deactivation does not reactivate a fulfilled recommendation.
+
 `BLURAY_COLLECTION_URL` is a Worker secret so an open-source repository does not disclose the owner's collection. Validation requires the exact HTTPS collection path, an allowed Blu-ray.com host, and one numeric user ID. The Worker removes pagination and alternate-view parameters, enforces category 7, and selects `sortby=recentlyaddedcollection` without logging the resulting URL.
 
 Browser discovery starts at page 0. For each page it extracts and validates the physical releases, asks D1 which product IDs already exist, and keeps the results in memory until the crawl reaches a safe stopping point. It requests the next page only when every release on the current page is new and the declared last page has not been reached. If any release is already known, it includes new releases from that page and stops. The final incremental upsert never deactivates an existing row, so a retry or an early stop cannot erase ownership. Browser subresources are aborted; each top-level navigation and every TMDB request consumes the bounded external-fetch budget.

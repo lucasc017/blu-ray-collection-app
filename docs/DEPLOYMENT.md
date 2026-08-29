@@ -180,10 +180,13 @@ Expected results:
   collection HTML or JSON is returned.
 - An approved Google account can load `/`, `/api/status`, and `/api/titles`; React finishes the
   session bootstrap and the header contains **Sign out**.
+- An approved Google account can load `/recommendations`, search for a movie, create or endorse a
+  recommendation, withdraw that endorsement, and see only email usernames rather than full addresses.
 - An approved non-admin account has no **Metadata review** navigation, receives the normal 404 UI
-  for `/admin/review`, and receives `403` from `/api/admin/*`.
+  for `/admin/review`, receives `403` from `/api/admin/*`, and has no recommendation Delete control.
 - The `ADMIN_EMAIL` account can load `/admin/review`, list unresolved/history data, and perform a
-  TMDB search. Treat the first production mapping save as a separate reviewed D1 mutation.
+  TMDB search. It can also confirm recommendation deletion. Treat the first production mapping save
+  or recommendation delete as a separate reviewed D1 mutation.
 - A Google account absent from the exact-email list is denied.
 - The dedicated service token passes Access only for machine requests; the Worker still rejects an
   internal request that lacks the independent sync token.

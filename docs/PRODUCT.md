@@ -2,7 +2,7 @@
 
 ## Goal
 
-Give approved friends a polished, private way to browse the owner’s physical movie and television collection without using Blu-ray.com as the browsing experience or maintaining a custom password system.
+Give approved friends a polished, private way to browse the owner’s physical movie and television collection and recommend future movie purchases without using Blu-ray.com as the browsing experience or maintaining a custom password system.
 
 ## V1 behavior
 
@@ -16,11 +16,13 @@ Give approved friends a polished, private way to browse the owner’s physical m
 - Sign in through Google and admit only exact email addresses maintained by the owner in Cloudflare Access.
 - Create or refresh a minimal D1 application-user record after Access admits a browser session.
 - Let the one configured administrator resolve metadata conflicts through bounded live TMDB search, ordered movie/TV-season mappings, and retained revision history.
+- Let signed-in users search TMDB for canonical movies, recommend one future purchase, see supporter usernames, and add or withdraw one endorsement per movie.
+- Sort recommendations by newest, most endorsed, or title; permanently retire a recommendation when the movie becomes owned; let the administrator permanently delete recommendations.
 
 ## Not in V1
 
-Passwords, email verification, account recovery, in-app allowlist or administrator management, suggestions, ratings, watch history, comments, custom domains, bulk approvals, ignored/excluded releases, and raw metadata editing are deferred. Live external lookups are limited to the administrator review workflow; ordinary browsing remains D1-only.
+Passwords, email verification, account recovery, in-app allowlist or administrator management, ratings, watch history, comments, custom domains, bulk approvals, ignored/excluded releases, and raw metadata editing are deferred. Ordinary collection and recommendation reads remain D1-only; live external lookups are limited to bounded recommendation searches/validation and the administrator review workflow.
 
 ## Success criteria
 
-The site remains usable while sync is in progress, every discovered source release is either mapped or recorded as an issue, reviewed mappings cannot be overwritten by automatic sync, partial external failures preserve prior ownership, non-admin users cannot read or mutate review data, unapproved identities are denied before application data is served, and no provider or Access credential reaches Git, logs, APIs, or browser code.
+The site remains usable while sync is in progress, every discovered source release is either mapped or recorded as an issue, reviewed mappings cannot be overwritten by automatic sync, partial external failures preserve prior ownership, recommendation votes stay unique per user and owned movies stay retired, non-admin users cannot read or mutate review data or delete recommendations, unapproved identities are denied before application data is served, and no provider or Access credential reaches Git, logs, APIs, or browser code.
