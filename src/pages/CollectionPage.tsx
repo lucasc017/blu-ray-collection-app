@@ -1,28 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { ListTitlesResponse, SyncStatus } from "../../shared/contracts";
 import { collectionApi } from "../api";
 import { LoadingGrid } from "../components/LoadingGrid";
 import { TitleCard } from "../components/TitleCard";
-
-function SearchInput({ value, onCommit }: { value: string; onCommit: (value: string) => void }) {
-  const [draft, setDraft] = useState(value);
-  useEffect(() => {
-    if (draft.trim() === value) return;
-    const timeout = window.setTimeout(() => onCommit(draft.trim()), 300);
-    return () => window.clearTimeout(timeout);
-  }, [draft, onCommit, value]);
-
-  return (
-    <input
-      id="collection-search"
-      type="search"
-      value={draft}
-      onChange={(event) => setDraft(event.target.value)}
-      placeholder="Movie or series title"
-    />
-  );
-}
 
 interface CollectionLoadState {
   query: string | null;
@@ -33,6 +14,7 @@ interface CollectionLoadState {
 export function CollectionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchValue = searchParams.get("q") ?? "";
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [loadState, setLoadState] = useState<CollectionLoadState>({
     query: null,
     collection: null,
@@ -54,6 +36,18 @@ export function CollectionPage() {
     },
     [searchParams, setSearchParams],
   );
+
+  useEffect(() => {
+    const input = searchInputRef.current;
+    if (input && input.value !== searchValue) input.value = searchValue;
+  }, [searchValue]);
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextSearchValue = searchInputRef.current?.value.trim() ?? "";
+    if (nextSearchValue === searchValue) return;
+    setParameter("q", nextSearchValue);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -112,14 +106,21 @@ export function CollectionPage() {
 
       <section className="collection-section" aria-labelledby="browse-heading">
         <div className="toolbar">
-          <div className="search-field">
+          <form className="search-field" role="search" onSubmit={submitSearch}>
             <label htmlFor="collection-search">Search the shelf</label>
-            <SearchInput
-              key={searchValue}
-              value={searchValue}
-              onCommit={(value) => setParameter("q", value)}
-            />
-          </div>
+            <div className="collection-search-controls">
+              <input
+                id="collection-search"
+                ref={searchInputRef}
+                type="search"
+                defaultValue={searchValue}
+                maxLength={100}
+                enterKeyHint="search"
+                placeholder="Movie or series title"
+              />
+              <button type="submit">Search</button>
+            </div>
+          </form>
           <div className="filter-row">
             <label>
               <span>Type</span>
