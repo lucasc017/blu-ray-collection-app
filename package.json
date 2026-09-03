@@ -52,12 +52,12 @@
     "node": ">=24 <25"
   },
   "dependencies": {
-    "hono": "^4.13.3",
+    "hono": "^4.13.5",
     "jose": "^6.2.10",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.2",
-    "zod": "^4.4.3"
+    "react-router-dom": "^7.18.3",
+    "zod": "^4.5.1"
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "^1.4.0",
