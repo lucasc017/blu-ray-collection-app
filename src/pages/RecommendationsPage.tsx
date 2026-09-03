@@ -204,13 +204,18 @@ export function RecommendationsPage() {
           <p className="eyebrow">Add a movie</p>
           <h2 id="recommend-movie-heading">Search TMDB</h2>
         </div>
-        <form className="recommendation-search" onSubmit={(event) => void submitSearch(event)}>
+        <form
+          className="recommendation-search"
+          role="search"
+          onSubmit={(event) => void submitSearch(event)}
+        >
           <label>
             Movie title
             <input
               value={query}
               minLength={2}
               maxLength={100}
+              enterKeyHint="search"
               required
               onChange={(event) => setQuery(event.target.value)}
             />
