@@ -116,8 +116,42 @@ describe("RecommendationsPage", () => {
       ),
     );
 
-    await browserUser.type(screen.getByLabelText("Movie title"), "New Pick");
+    const searchInput = screen.getByLabelText("Movie title");
+    const searchRequestsBeforeTyping = fetchMock.mock.calls.filter(([input]) =>
+      (typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url
+      ).startsWith("/api/recommendations/search"),
+    ).length;
+    expect(screen.getByRole("search")).toBeVisible();
+    expect(searchInput).toHaveAttribute("enterkeyhint", "search");
+    await browserUser.type(searchInput, "New Pick");
+    expect(searchInput).toHaveFocus();
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        (typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url
+        ).startsWith("/api/recommendations/search"),
+      ),
+    ).toHaveLength(searchRequestsBeforeTyping);
     await browserUser.click(screen.getByRole("button", { name: "Search" }));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          (typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url
+          ).startsWith("/api/recommendations/search"),
+        ),
+      ).toHaveLength(searchRequestsBeforeTyping + 1),
+    );
     await browserUser.click(await screen.findByRole("button", { name: "Recommend New Pick" }));
     expect(await screen.findByText("New Pick was added and endorsed.")).toBeVisible();
 

@@ -86,8 +86,34 @@ describe("MetadataReviewPage", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "A Conflicted Release" })).toBeVisible();
-    await user.type(screen.getByLabelText("Title"), "Matched Movie");
+    const searchInput = screen.getByLabelText("Title");
+    expect(screen.getByRole("search")).toBeVisible();
+    expect(searchInput).toHaveAttribute("enterkeyhint", "search");
+    await user.type(searchInput, "Matched Movie");
+    expect(searchInput).toHaveFocus();
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        (typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url
+        ).startsWith("/api/admin/tmdb/search"),
+      ),
+    ).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Search" }));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          (typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url
+          ).startsWith("/api/admin/tmdb/search"),
+        ),
+      ).toHaveLength(1),
+    );
     await user.click(await screen.findByRole("button", { name: /Matched Movie/ }));
     expect(screen.getByText("1/20 titles")).toBeVisible();
 
