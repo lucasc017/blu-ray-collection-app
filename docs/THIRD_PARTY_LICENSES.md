@@ -7,7 +7,7 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | SPDX expression                          | Packages |
 | ---------------------------------------- | -------: |
 | 0BSD                                     |        1 |
-| Apache-2.0                               |       45 |
+| Apache-2.0                               |       51 |
 | Apache-2.0 AND LGPL-3.0-or-later         |        3 |
 | Apache-2.0 AND LGPL-3.0-or-later AND MIT |        1 |
 | BlueOak-1.0.0                            |        4 |
@@ -17,7 +17,7 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | CC0-1.0                                  |        2 |
 | ISC                                      |       18 |
 | LGPL-3.0-or-later                        |       10 |
-| MIT                                      |      278 |
+| MIT                                      |      281 |
 | MIT OR Apache-2.0                        |        5 |
 | MIT-0                                    |        2 |
 | MPL-2.0                                  |       12 |
@@ -27,35 +27,35 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | Package                           | Version      | License           |
 | --------------------------------- | ------------ | ----------------- |
 | `@cloudflare/puppeteer`           | 1.4.0        | Apache-2.0        |
-| `@cloudflare/vite-plugin`         | 1.53.1       | MIT               |
+| `@cloudflare/vite-plugin`         | 1.54.2       | MIT               |
 | `@cloudflare/vitest-pool-workers` | 0.22.0       | MIT               |
-| `@cloudflare/workers-types`       | 5.20260821.1 | MIT OR Apache-2.0 |
+| `@cloudflare/workers-types`       | 5.20260828.1 | MIT OR Apache-2.0 |
 | `@eslint/js`                      | 10.0.1       | MIT               |
 | `@testing-library/jest-dom`       | 7.0.1        | MIT               |
-| `@testing-library/react`          | 16.3.2       | MIT               |
-| `@testing-library/user-event`     | 14.6.5       | MIT               |
-| `@types/node`                     | 26.2.0       | MIT               |
+| `@testing-library/react`          | 16.3.3       | MIT               |
+| `@testing-library/user-event`     | 14.6.6       | MIT               |
+| `@types/node`                     | 26.4.0       | MIT               |
 | `@types/react`                    | 19.2.18      | MIT               |
-| `@types/react-dom`                | 19.2.4       | MIT               |
-| `@vitejs/plugin-react`            | 6.1.0        | MIT               |
+| `@types/react-dom`                | 19.2.5       | MIT               |
+| `@vitejs/plugin-react`            | 6.1.1        | MIT               |
 | `@vitest/coverage-v8`             | 4.1.11       | MIT               |
-| `eslint`                          | 10.9.0       | MIT               |
+| `eslint`                          | 10.9.1       | MIT               |
 | `eslint-plugin-react-hooks`       | 7.1.1        | MIT               |
-| `eslint-plugin-react-refresh`     | 0.5.4        | MIT               |
-| `hono`                            | 4.13.3       | MIT               |
+| `eslint-plugin-react-refresh`     | 0.5.5        | MIT               |
+| `hono`                            | 4.13.5       | MIT               |
 | `jose`                            | 6.2.10       | MIT               |
 | `jsdom`                           | 30.0.1       | MIT               |
 | `prettier`                        | 3.9.6        | MIT               |
 | `react`                           | 19.2.8       | MIT               |
 | `react-dom`                       | 19.2.8       | MIT               |
-| `react-router-dom`                | 7.18.2       | MIT               |
+| `react-router-dom`                | 7.18.3       | MIT               |
 | `tsx`                             | 4.23.12      | MIT               |
 | `typescript`                      | 6.0.3        | Apache-2.0        |
-| `typescript-eslint`               | 8.67.0       | MIT               |
+| `typescript-eslint`               | 8.68.0       | MIT               |
 | `vite`                            | 8.2.2        | MIT               |
 | `vitest`                          | 4.1.11       | MIT               |
-| `wrangler`                        | 4.124.0      | MIT OR Apache-2.0 |
-| `zod`                             | 4.4.3        | MIT               |
+| `wrangler`                        | 4.127.1      | MIT OR Apache-2.0 |
+| `zod`                             | 4.5.1        | MIT               |
 
 ## Dependencies requiring notice or reciprocal-license review
 
