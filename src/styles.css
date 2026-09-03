@@ -281,6 +281,16 @@ main {
   color: #697384;
 }
 
+.collection-search-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+}
+
+.collection-search-controls button {
+  min-width: 92px;
+}
+
 .filter-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(120px, 1fr));
@@ -1383,6 +1393,10 @@ button.danger {
 
   .toolbar {
     padding: 0.85rem;
+  }
+
+  .collection-search-controls {
+    grid-template-columns: 1fr;
   }
 
   .filter-row {

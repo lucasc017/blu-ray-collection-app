@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-08-28
+Last updated: 2026-08-31
 
 ## Implemented
 
@@ -36,6 +36,8 @@ Last updated: 2026-08-28
 
 ## Implemented locally, pending production rollout
 
+- Focus-stable, explicit-submit collection search with URL synchronization, mobile keyboard hints,
+  responsive controls, and regression coverage across all search forms.
 - `ADMIN_EMAIL` authorization layered on the existing verified Access user identity; ordinary users
   and service principals cannot read or mutate `/api/admin/*`.
 - Administrator-only `/admin/review` UI with unresolved/history queues, live movie/TV TMDB search,

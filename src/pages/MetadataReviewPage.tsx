@@ -379,7 +379,11 @@ export function MetadataReviewPage() {
 
               <section className="review-section" aria-labelledby="tmdb-search-heading">
                 <h2 id="tmdb-search-heading">Search TMDB</h2>
-                <form className="review-search" onSubmit={(event) => void submitSearch(event)}>
+                <form
+                  className="review-search"
+                  role="search"
+                  onSubmit={(event) => void submitSearch(event)}
+                >
                   <label>
                     Type
                     <select
@@ -396,6 +400,7 @@ export function MetadataReviewPage() {
                       value={query}
                       minLength={2}
                       maxLength={100}
+                      enterKeyHint="search"
                       required
                       onChange={(event) => setQuery(event.target.value)}
                     />
