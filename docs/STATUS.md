@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-08-31
+Last updated: 2026-10-10
 
 ## Implemented
 
@@ -60,6 +60,12 @@ Last updated: 2026-08-31
 This implementation did not install `ADMIN_EMAIL`, apply migrations `0003` or `0004`, deploy a Worker
 version, or mutate production review/recommendation data. Those remain distinct owner-authorized
 production actions.
+
+## Dependency security maintenance
+
+- Updating the Cloudflare Vite plugin, Wrangler, and Worker test integration to patched releases;
+  regenerating dependency locks and verifying the full CI security gate in Dependabot PR #19.
+- Merge the development dependency repair before the production dependency update in PR #18.
 
 ## Remaining operational work
 
