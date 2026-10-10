@@ -14,11 +14,7 @@
     "moduleDetection": "force",
     "noEmit": true,
     "skipLibCheck": true,
-    "types": [
-      "@cloudflare/workers-types",
-      "@cloudflare/vitest-pool-workers/types",
-      "vitest/globals"
-    ]
+    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-plugin/types", "vitest/globals"]
   },
   "include": ["worker", "shared", "worker-configuration.d.ts"]
 }
