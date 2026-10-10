@@ -16,7 +16,7 @@
     "skipLibCheck": true,
     "types": [
       "@cloudflare/workers-types",
-      "@cloudflare/vitest-pool-workers/types",
+      "@cloudflare/vitest-plugin/types",
       "vitest/globals"
     ]
   },
