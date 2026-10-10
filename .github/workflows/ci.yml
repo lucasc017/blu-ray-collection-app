@@ -49,25 +49,11 @@ jobs:
           node-version-file: package.json
           cache: npm
 
-      - name: Regenerate dependency lockfile for this repair
-        run: |
-          npm install --package-lock-only --ignore-scripts
-          npm audit fix --package-lock-only --ignore-scripts
-
       - name: Install dependencies
         run: npm ci
 
       - name: Generate Cloudflare bindings
         run: npm run cf-typegen
-
-      - name: Export regenerated dependency files for review
-        run: |
-          node --input-type=module <<'NODE'
-          import { readFileSync } from 'node:fs';
-          import { gzipSync } from 'node:zlib';
-          const files = Object.fromEntries(['package.json', 'package-lock.json', 'worker-configuration.d.ts'].map(path => [path, readFileSync(path, 'utf8')]));
-          console.log('DEPENDENCY_REPAIR_FILES=' + gzipSync(JSON.stringify(files)).toString('base64'));
-          NODE
 
       - name: Validate application
         run: npm run check
