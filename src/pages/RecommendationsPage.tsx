@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
-import type {
-  ListMovieRecommendationsResponse,
-  MovieRecommendation,
-  RecommendationSort,
-  TmdbReviewSearchResult,
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  titlePath,
+  type ListMovieRecommendationsResponse,
+  type MovieRecommendation,
+  type RecommendationSearchResult,
+  type RecommendationSort,
 } from "../../shared/contracts";
 import { useSession } from "../auth/session-context";
 import { ApiError, imageUrl, recommendationApi } from "../api";
@@ -32,7 +33,7 @@ export function RecommendationsPage() {
   const [reloadToken, setReloadToken] = useState(0);
   const [query, setQuery] = useState("");
   const [year, setYear] = useState("");
-  const [searchResults, setSearchResults] = useState<TmdbReviewSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<RecommendationSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -108,7 +109,7 @@ export function RecommendationsPage() {
     }
   }
 
-  async function recommend(result: TmdbReviewSearchResult) {
+  async function recommend(result: RecommendationSearchResult) {
     setBusyId(-result.tmdbId);
     setNotice(null);
     setSearchError(null);
@@ -243,24 +244,41 @@ export function RecommendationsPage() {
           <div className="recommendation-search-results" aria-label="Movie search results">
             {searchResults.map((result) => (
               <article key={result.tmdbId} className="recommendation-search-result">
-                {imageUrl(result.posterPath) ? (
-                  <img src={imageUrl(result.posterPath) ?? ""} alt="" loading="lazy" />
-                ) : (
-                  <span className="poster-placeholder" aria-hidden="true">
-                    No poster
-                  </span>
-                )}
+                <div className="recommendation-search-poster">
+                  {imageUrl(result.posterPath) ? (
+                    <img src={imageUrl(result.posterPath) ?? ""} alt="" loading="lazy" />
+                  ) : (
+                    <span className="poster-placeholder" aria-hidden="true">
+                      No poster
+                    </span>
+                  )}
+                  {result.owned ? <span className="owned-badge">In collection</span> : null}
+                </div>
                 <div>
                   <h3>{result.title}</h3>
                   <p className="muted">{result.releaseYear ?? "Year unavailable"}</p>
                   <p>{result.overview || "No overview available."}</p>
-                  <button
-                    type="button"
-                    disabled={busyId === -result.tmdbId}
-                    onClick={() => void recommend(result)}
-                  >
-                    {busyId === -result.tmdbId ? "Adding…" : `Recommend ${result.title}`}
-                  </button>
+                  {result.owned ? (
+                    <Link
+                      className="button-link"
+                      to={titlePath({
+                        mediaType: "movie",
+                        tmdbId: result.tmdbId,
+                        seasonNumber: null,
+                      })}
+                      aria-label={`View ${result.title} in the collection`}
+                    >
+                      View in collection
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busyId === -result.tmdbId}
+                      onClick={() => void recommend(result)}
+                    >
+                      {busyId === -result.tmdbId ? "Adding…" : `Recommend ${result.title}`}
+                    </button>
+                  )}
                 </div>
               </article>
             ))}
