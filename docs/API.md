@@ -14,7 +14,7 @@ assertions. Exact local HTTP loopback requests use a development identity.
 - `GET /titles/tv/:tmdbId/season/:seasonNumber`: returns one owned TV season and its active releases.
 - `GET /status`: returns collection counts, state, unresolved issue count, and last successful sync time.
 - `GET /recommendations`: accepts `sort=newest|endorsements|title`, `page`, and `pageSize` (maximum 60). Returns active movie recommendations, creator/supporter email usernames, unique endorsement counts, and the current user's endorsement state.
-- `GET /recommendations/search`: accepts `q` (2–100 characters) and optional `year`. Returns at most 20 first-page TMDB movie candidates through a bounded Worker-only lookup.
+- `GET /recommendations/search`: accepts `q` (2–100 characters) and optional `year`. Returns at most 20 first-page TMDB movie candidates through a bounded Worker-only lookup. Each candidate includes an `owned` flag that is `true` when the movie already has an active release in the collection.
 - `POST /recommendations`: accepts `{ tmdbId }`. A new movie is validated and cached from TMDB, creates one recommendation plus the creator's endorsement, and returns `201`. An existing active recommendation is endorsed idempotently and returns `200`. Owned or permanently fulfilled movies return `409`.
 - `PUT /recommendations/:recommendationId/endorsement`: accepts `{ endorsed: boolean }`. It idempotently adds or removes the current user's endorsement. Removing the final endorsement deletes the recommendation.
 

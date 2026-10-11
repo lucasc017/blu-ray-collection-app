@@ -57,6 +57,18 @@ describe("RecommendationsPage", () => {
                   releaseDate: "2024-01-01",
                   releaseYear: 2024,
                   posterPath: null,
+                  owned: false,
+                },
+                {
+                  mediaType: "movie",
+                  tmdbId: 303,
+                  title: "Shelf Film",
+                  originalTitle: "Shelf Film",
+                  overview: "Already on the shelf.",
+                  releaseDate: "2019-01-01",
+                  releaseYear: 2019,
+                  posterPath: null,
+                  owned: true,
                 },
               ],
             }),
@@ -152,6 +164,12 @@ describe("RecommendationsPage", () => {
         ),
       ).toHaveLength(searchRequestsBeforeTyping + 1),
     );
+    expect(await screen.findByText("In collection")).toBeVisible();
+    expect(screen.getByRole("link", { name: "View Shelf Film in the collection" })).toHaveAttribute(
+      "href",
+      "/title/movie/303",
+    );
+    expect(screen.queryByRole("button", { name: "Recommend Shelf Film" })).not.toBeInTheDocument();
     await browserUser.click(await screen.findByRole("button", { name: "Recommend New Pick" }));
     expect(await screen.findByText("New Pick was added and endorsed.")).toBeVisible();
 

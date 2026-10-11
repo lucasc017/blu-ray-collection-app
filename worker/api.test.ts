@@ -184,6 +184,14 @@ describe("authenticated collection API", () => {
                   release_date: "2024-01-01",
                   poster_path: "/recommended.jpg",
                 },
+                {
+                  id: 603,
+                  title: "The Matrix",
+                  original_title: "The Matrix",
+                  overview: "A simulated reality.",
+                  release_date: "1999-03-31",
+                  poster_path: null,
+                },
               ],
             }),
           );
@@ -213,8 +221,13 @@ describe("authenticated collection API", () => {
       "http://localhost/api/recommendations/search?q=Recommended%20Film&year=2024",
     );
     expect(search.status).toBe(200);
-    await expect(search.json<{ items: Array<{ tmdbId: number }> }>()).resolves.toMatchObject({
-      items: [{ tmdbId: 601 }],
+    await expect(
+      search.json<{ items: Array<{ tmdbId: number; owned: boolean }> }>(),
+    ).resolves.toMatchObject({
+      items: [
+        { tmdbId: 601, owned: false },
+        { tmdbId: 603, owned: true },
+      ],
     });
 
     const created = await SELF.fetch("http://localhost/api/recommendations", {

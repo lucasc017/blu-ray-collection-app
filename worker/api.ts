@@ -4,8 +4,10 @@ import type {
   ApiErrorBody,
   CreateMovieRecommendationRequest,
   MediaType,
+  RecommendationSearchResponse,
   SaveMetadataReviewRequest,
   SetMovieRecommendationEndorsementRequest,
+  TmdbReviewSearchResponse,
 } from "../shared/contracts";
 import {
   AccessAuthenticationError,
@@ -29,6 +31,7 @@ import {
   deleteMovieRecommendation,
   getRecommendationState,
   listMovieRecommendations,
+  ownedMovieTmdbIds,
   RecommendationUnavailableError,
   setMovieRecommendationEndorsement,
 } from "./db/recommendations";
@@ -280,8 +283,9 @@ api.get("/recommendations/search", async (c) => {
     configuration.tmdbReadAccessToken,
     new FetchBudget(3),
   );
+  let found: TmdbReviewSearchResponse;
   try {
-    return c.json(await tmdb.search("movie", parsed.data.q, parsed.data.year));
+    found = await tmdb.search("movie", parsed.data.q, parsed.data.year);
   } catch (error) {
     if (!(error instanceof ExternalFetchError || error instanceof FetchBudgetExceededError)) {
       throw error;
@@ -295,6 +299,14 @@ api.get("/recommendations/search", async (c) => {
       502,
     );
   }
+  const owned = await ownedMovieTmdbIds(
+    c.env.DB,
+    found.items.map((item) => item.tmdbId),
+  );
+  const response: RecommendationSearchResponse = {
+    items: found.items.map((item) => ({ ...item, owned: owned.has(item.tmdbId) })),
+  };
+  return c.json(response);
 });
 
 api.post("/recommendations", async (c) => {

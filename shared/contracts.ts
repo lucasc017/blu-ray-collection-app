@@ -220,7 +220,13 @@ export interface SetMovieRecommendationEndorsementResponse {
   removed: boolean;
 }
 
-export type RecommendationSearchResponse = TmdbReviewSearchResponse;
+export interface RecommendationSearchResult extends TmdbReviewSearchResult {
+  owned: boolean;
+}
+
+export interface RecommendationSearchResponse {
+  items: RecommendationSearchResult[];
+}
 
 export function titlePath(
   entry: Pick<CollectionEntry, "mediaType" | "tmdbId" | "seasonNumber">,

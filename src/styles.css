@@ -1197,12 +1197,32 @@ main {
   background: var(--surface-raised);
 }
 
-.recommendation-search-result img,
-.recommendation-search-result > .poster-placeholder {
+.recommendation-search-poster {
+  position: relative;
+  align-self: start;
+}
+
+.recommendation-search-poster img,
+.recommendation-search-poster .poster-placeholder {
   width: 96px;
   aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: 9px;
+}
+
+.owned-badge {
+  position: absolute;
+  right: 0.35rem;
+  bottom: 0.35rem;
+  left: 0.35rem;
+  padding: 0.3rem 0.35rem;
+  border-radius: 6px;
+  color: #07110e;
+  background: rgba(114, 225, 194, 0.92);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: center;
 }
 
 .recommendation-search-result h3,

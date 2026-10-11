@@ -188,6 +188,23 @@ export async function getRecommendationState(
     : null;
 }
 
+export async function ownedMovieTmdbIds(db: D1Database, tmdbIds: number[]): Promise<Set<number>> {
+  if (tmdbIds.length === 0) return new Set();
+  const placeholders = tmdbIds.map(() => "?").join(", ");
+  const { results } = await db
+    .prepare(
+      `SELECT DISTINCT t.tmdb_id AS tmdbId
+       FROM titles t
+       JOIN source_release_titles srt ON srt.title_id = t.id
+       JOIN source_releases sr ON sr.product_id = srt.product_id
+       WHERE t.media_type = 'movie' AND t.season_number = -1 AND sr.active = 1
+         AND t.tmdb_id IN (${placeholders})`,
+    )
+    .bind(...tmdbIds)
+    .all<{ tmdbId: number }>();
+  return new Set(results.map((row) => row.tmdbId));
+}
+
 export async function createMovieRecommendation(
   db: D1Database,
   metadata: TitleMetadata,
