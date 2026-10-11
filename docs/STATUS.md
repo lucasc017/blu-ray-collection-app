@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-10
+Last updated: 2026-10-11
 
 ## Implemented
 
@@ -66,6 +66,12 @@ production actions.
 - Updating the Cloudflare Vite plugin, Wrangler, and Worker test integration to patched releases;
   regenerating dependency locks and verifying the full CI security gate in Dependabot PR #19.
 - Merge the development dependency repair before the production dependency update in PR #18.
+
+## CI code scanning
+
+- Advanced CodeQL workflow prepared for JavaScript/TypeScript and GitHub Actions, including fork PRs.
+- Repository default setup must be disabled before advanced result uploads can be verified.
+- [CI migration runbook](CI.md) records the required checks and the rollout for existing fork PRs.
 
 ## Remaining operational work
 

@@ -29,6 +29,12 @@ repository without replacing the binding instructions in the root or nested `AGE
 | `docs/`          | Product, architecture, operations, and decisions        | Root `AGENTS.md`        |
 | `wrangler.jsonc` | Production bindings, public variables, assets, and Cron | Root `AGENTS.md`        |
 
+## CI and code scanning
+
+Read [CI.md](CI.md) before changing workflow triggers or CodeQL setup. Fork PRs require the advanced
+workflow; preserve the exact `Analyze (javascript-typescript)` required-check name and validate
+result uploads after any setup change.
+
 ## Architectural invariants
 
 - One Cloudflare Worker serves the SPA and `/api/*`.
