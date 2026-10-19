@@ -54,10 +54,10 @@
   "dependencies": {
     "hono": "^4.13.8",
     "jose": "^6.2.12",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "^1.4.0",
