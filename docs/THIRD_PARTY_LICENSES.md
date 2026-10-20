@@ -7,7 +7,7 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | SPDX expression                          | Packages |
 | ---------------------------------------- | -------: |
 | 0BSD                                     |        1 |
-| Apache-2.0                               |       51 |
+| Apache-2.0                               |       39 |
 | Apache-2.0 AND LGPL-3.0-or-later         |        3 |
 | Apache-2.0 AND LGPL-3.0-or-later AND MIT |        1 |
 | BlueOak-1.0.0                            |        4 |
@@ -17,62 +17,62 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | CC0-1.0                                  |        2 |
 | ISC                                      |       18 |
 | LGPL-3.0-or-later                        |       10 |
-| MIT                                      |      281 |
-| MIT OR Apache-2.0                        |        5 |
+| MIT                                      |      288 |
+| MIT OR Apache-2.0                        |        6 |
 | MIT-0                                    |        2 |
 | MPL-2.0                                  |       12 |
 
 ## Direct dependencies
 
-| Package                           | Version      | License           |
-| --------------------------------- | ------------ | ----------------- |
-| `@cloudflare/puppeteer`           | 1.4.0        | Apache-2.0        |
-| `@cloudflare/vite-plugin`         | 1.54.2       | MIT               |
-| `@cloudflare/vitest-pool-workers` | 0.22.0       | MIT               |
-| `@cloudflare/workers-types`       | 5.20260828.1 | MIT OR Apache-2.0 |
-| `@eslint/js`                      | 10.0.1       | MIT               |
-| `@testing-library/jest-dom`       | 7.0.1        | MIT               |
-| `@testing-library/react`          | 16.3.3       | MIT               |
-| `@testing-library/user-event`     | 14.6.6       | MIT               |
-| `@types/node`                     | 26.4.0       | MIT               |
-| `@types/react`                    | 19.2.18      | MIT               |
-| `@types/react-dom`                | 19.2.5       | MIT               |
-| `@vitejs/plugin-react`            | 6.1.1        | MIT               |
-| `@vitest/coverage-v8`             | 4.1.11       | MIT               |
-| `eslint`                          | 10.9.1       | MIT               |
-| `eslint-plugin-react-hooks`       | 7.1.1        | MIT               |
-| `eslint-plugin-react-refresh`     | 0.5.5        | MIT               |
-| `hono`                            | 4.13.5       | MIT               |
-| `jose`                            | 6.2.10       | MIT               |
-| `jsdom`                           | 30.0.1       | MIT               |
-| `prettier`                        | 3.9.6        | MIT               |
-| `react`                           | 19.2.8       | MIT               |
-| `react-dom`                       | 19.2.8       | MIT               |
-| `react-router-dom`                | 7.18.3       | MIT               |
-| `tsx`                             | 4.23.12      | MIT               |
-| `typescript`                      | 6.0.3        | Apache-2.0        |
-| `typescript-eslint`               | 8.68.0       | MIT               |
-| `vite`                            | 8.2.2        | MIT               |
-| `vitest`                          | 4.1.11       | MIT               |
-| `wrangler`                        | 4.127.1      | MIT OR Apache-2.0 |
-| `zod`                             | 4.5.1        | MIT               |
+| Package                       | Version      | License           |
+| ----------------------------- | ------------ | ----------------- |
+| `@cloudflare/puppeteer`       | 1.4.0        | Apache-2.0        |
+| `@cloudflare/vite-plugin`     | 1.64.0       | MIT               |
+| `@cloudflare/vitest-plugin`   | 1.4.4        | MIT               |
+| `@cloudflare/workers-types`   | 5.20261016.1 | MIT OR Apache-2.0 |
+| `@eslint/js`                  | 10.0.1       | MIT               |
+| `@testing-library/jest-dom`   | 7.0.1        | MIT               |
+| `@testing-library/react`      | 16.3.3       | MIT               |
+| `@testing-library/user-event` | 14.6.8       | MIT               |
+| `@types/node`                 | 26.6.5       | MIT               |
+| `@types/react`                | 19.3.0       | MIT               |
+| `@types/react-dom`            | 19.3.0       | MIT               |
+| `@vitejs/plugin-react`        | 6.1.2        | MIT               |
+| `@vitest/coverage-v8`         | 4.1.12       | MIT               |
+| `eslint`                      | 10.13.0      | MIT               |
+| `eslint-plugin-react-hooks`   | 7.1.1        | MIT               |
+| `eslint-plugin-react-refresh` | 0.5.7        | MIT               |
+| `hono`                        | 4.13.13      | MIT               |
+| `jose`                        | 6.2.12       | MIT               |
+| `jsdom`                       | 30.1.3       | MIT               |
+| `prettier`                    | 3.9.10       | MIT               |
+| `react`                       | 19.3.1       | MIT               |
+| `react-dom`                   | 19.3.1       | MIT               |
+| `react-router-dom`            | 7.18.4       | MIT               |
+| `tsx`                         | 4.23.15      | MIT               |
+| `typescript`                  | 6.0.3        | Apache-2.0        |
+| `typescript-eslint`           | 8.71.2       | MIT               |
+| `vite`                        | 8.3.4        | MIT               |
+| `vitest`                      | 4.1.12       | MIT               |
+| `wrangler`                    | 4.151.1      | MIT OR Apache-2.0 |
+| `zod`                         | 4.6.7        | MIT               |
 
 ## Dependencies requiring notice or reciprocal-license review
 
-- `@img/sharp-libvips-darwin-arm64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-darwin-x64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linux-arm64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linux-arm@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linux-ppc64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linux-riscv64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linux-s390x@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linux-x64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linuxmusl-arm64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-libvips-linuxmusl-x64@1.3.1`: LGPL-3.0-or-later
-- `@img/sharp-wasm32@0.35.2`: Apache-2.0 AND LGPL-3.0-or-later AND MIT
-- `@img/sharp-win32-arm64@0.35.2`: Apache-2.0 AND LGPL-3.0-or-later
-- `@img/sharp-win32-ia32@0.35.2`: Apache-2.0 AND LGPL-3.0-or-later
-- `@img/sharp-win32-x64@0.35.2`: Apache-2.0 AND LGPL-3.0-or-later
+- `@img/sharp-libvips-darwin-arm64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-darwin-x64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linux-arm64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linux-arm@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linux-ppc64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linux-riscv64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linux-s390x@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linux-x64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linuxmusl-arm64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-libvips-linuxmusl-x64@1.3.4`: LGPL-3.0-or-later
+- `@img/sharp-wasm32@0.35.5`: Apache-2.0 AND LGPL-3.0-or-later AND MIT
+- `@img/sharp-win32-arm64@0.35.5`: Apache-2.0 AND LGPL-3.0-or-later
+- `@img/sharp-win32-ia32@0.35.5`: Apache-2.0 AND LGPL-3.0-or-later
+- `@img/sharp-win32-x64@0.35.5`: Apache-2.0 AND LGPL-3.0-or-later
 - `caniuse-lite@1.0.30001809`: CC-BY-4.0
 - `lightningcss-android-arm64@1.33.0`: MPL-2.0
 - `lightningcss-darwin-arm64@1.33.0`: MPL-2.0

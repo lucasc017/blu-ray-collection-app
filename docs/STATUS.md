@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-11
+Last updated: 2026-10-19
 
 ## Implemented
 
@@ -63,6 +63,9 @@ production actions.
 
 ## Dependency security maintenance
 
+- The current development dependency refresh keeps TypeScript on 6.0.x and Vitest/coverage on 4.x.
+  TypeScript 7 and Vitest 5 are deferred to separate compatibility upgrades; routine development
+  dependency groups include only minor and patch updates.
 - Updating the Cloudflare Vite plugin, Wrangler, and Worker test integration to patched releases;
   regenerating dependency locks and verifying the full CI security gate in Dependabot PR #19.
 - Merge the development dependency repair before the production dependency update in PR #18.
