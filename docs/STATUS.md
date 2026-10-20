@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-11
+Last updated: 2026-10-19
 
 ## Implemented
 
@@ -69,6 +69,8 @@ production actions.
 
 ## CI code scanning
 
+- CodeQL initialization and analysis are pinned together to 4.39.0; Dependabot groups all CodeQL
+  action updates so future releases cannot split the two steps across incompatible versions.
 - Advanced CodeQL workflow prepared for JavaScript/TypeScript and GitHub Actions, including fork PRs.
 - Repository default setup must be disabled before advanced result uploads can be verified.
 - [CI migration runbook](CI.md) records the required checks and the rollout for existing fork PRs.
