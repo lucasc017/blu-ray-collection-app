@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-19
+Last updated: 2026-11-02
 
 ## Implemented
 
@@ -63,8 +63,10 @@ production actions.
 
 ## Dependency security maintenance
 
-- The current development dependency refresh keeps TypeScript on 6.0.x and Vitest/coverage on 4.x.
-  TypeScript 7 and Vitest 5 are deferred to separate compatibility upgrades; routine development
+- November dependency maintenance includes the patched Cloudflare toolchain to clear high-severity undici advisories. TypeScript 7 remains blocked by typescript-eslint compatibility.
+
+- Vitest and coverage are upgraded together to 5.x and grouped for future synchronized updates.
+  TypeScript stays on 6.0.x until the lint toolchain supports TypeScript 7; routine development
   dependency groups include only minor and patch updates.
 - Updating the Cloudflare Vite plugin, Wrangler, and Worker test integration to patched releases;
   regenerating dependency locks and verifying the full CI security gate in Dependabot PR #19.

@@ -12,13 +12,13 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | Apache-2.0 AND LGPL-3.0-or-later AND MIT |        1 |
 | BlueOak-1.0.0                            |        4 |
 | BSD-2-Clause                             |        8 |
-| BSD-3-Clause                             |        7 |
+| BSD-3-Clause                             |        4 |
 | CC-BY-4.0                                |        1 |
 | CC0-1.0                                  |        2 |
-| ISC                                      |       18 |
+| ISC                                      |       16 |
 | LGPL-3.0-or-later                        |       10 |
-| MIT                                      |      288 |
-| MIT OR Apache-2.0                        |        6 |
+| MIT                                      |      280 |
+| MIT OR Apache-2.0                        |        5 |
 | MIT-0                                    |        2 |
 | MPL-2.0                                  |       12 |
 
@@ -27,19 +27,19 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | Package                       | Version      | License           |
 | ----------------------------- | ------------ | ----------------- |
 | `@cloudflare/puppeteer`       | 1.4.0        | Apache-2.0        |
-| `@cloudflare/vite-plugin`     | 1.64.0       | MIT               |
-| `@cloudflare/vitest-plugin`   | 1.4.4        | MIT               |
-| `@cloudflare/workers-types`   | 5.20261016.1 | MIT OR Apache-2.0 |
+| `@cloudflare/vite-plugin`     | 1.66.0       | MIT               |
+| `@cloudflare/vitest-plugin`   | 1.4.11       | MIT               |
+| `@cloudflare/workers-types`   | 5.20261030.1 | MIT OR Apache-2.0 |
 | `@eslint/js`                  | 10.0.1       | MIT               |
 | `@testing-library/jest-dom`   | 7.0.1        | MIT               |
 | `@testing-library/react`      | 16.3.3       | MIT               |
 | `@testing-library/user-event` | 14.6.8       | MIT               |
-| `@types/node`                 | 26.6.5       | MIT               |
+| `@types/node`                 | 26.6.6       | MIT               |
 | `@types/react`                | 19.3.0       | MIT               |
 | `@types/react-dom`            | 19.3.0       | MIT               |
 | `@vitejs/plugin-react`        | 6.1.2        | MIT               |
-| `@vitest/coverage-v8`         | 4.1.12       | MIT               |
-| `eslint`                      | 10.13.0      | MIT               |
+| `@vitest/coverage-v8`         | 5.1.0        | MIT               |
+| `eslint`                      | 10.14.0      | MIT               |
 | `eslint-plugin-react-hooks`   | 7.1.1        | MIT               |
 | `eslint-plugin-react-refresh` | 0.5.7        | MIT               |
 | `hono`                        | 4.13.13      | MIT               |
@@ -51,10 +51,10 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | `react-router-dom`            | 7.18.4       | MIT               |
 | `tsx`                         | 4.23.15      | MIT               |
 | `typescript`                  | 6.0.3        | Apache-2.0        |
-| `typescript-eslint`           | 8.71.2       | MIT               |
-| `vite`                        | 8.3.4        | MIT               |
-| `vitest`                      | 4.1.12       | MIT               |
-| `wrangler`                    | 4.151.1      | MIT OR Apache-2.0 |
+| `typescript-eslint`           | 8.72.1       | MIT               |
+| `vite`                        | 8.3.5        | MIT               |
+| `vitest`                      | 5.1.0        | MIT               |
+| `wrangler`                    | 4.156.0      | MIT OR Apache-2.0 |
 | `zod`                         | 4.6.7        | MIT               |
 
 ## Dependencies requiring notice or reciprocal-license review
