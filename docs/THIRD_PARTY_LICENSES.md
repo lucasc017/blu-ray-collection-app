@@ -17,8 +17,8 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | CC0-1.0                                  |        2 |
 | ISC                                      |       18 |
 | LGPL-3.0-or-later                        |       10 |
-| MIT                                      |      288 |
-| MIT OR Apache-2.0                        |        6 |
+| MIT                                      |      289 |
+| MIT OR Apache-2.0                        |        5 |
 | MIT-0                                    |        2 |
 | MPL-2.0                                  |       12 |
 
@@ -27,9 +27,9 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | Package                       | Version      | License           |
 | ----------------------------- | ------------ | ----------------- |
 | `@cloudflare/puppeteer`       | 1.4.0        | Apache-2.0        |
-| `@cloudflare/vite-plugin`     | 1.64.0       | MIT               |
-| `@cloudflare/vitest-plugin`   | 1.4.4        | MIT               |
-| `@cloudflare/workers-types`   | 5.20261016.1 | MIT OR Apache-2.0 |
+| `@cloudflare/vite-plugin`     | 1.66.0       | MIT               |
+| `@cloudflare/vitest-plugin`   | 1.4.11       | MIT               |
+| `@cloudflare/workers-types`   | 5.20261101.1 | MIT OR Apache-2.0 |
 | `@eslint/js`                  | 10.0.1       | MIT               |
 | `@testing-library/jest-dom`   | 7.0.1        | MIT               |
 | `@testing-library/react`      | 16.3.3       | MIT               |
@@ -42,19 +42,19 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | `eslint`                      | 10.13.0      | MIT               |
 | `eslint-plugin-react-hooks`   | 7.1.1        | MIT               |
 | `eslint-plugin-react-refresh` | 0.5.7        | MIT               |
-| `hono`                        | 4.13.13      | MIT               |
-| `jose`                        | 6.2.12       | MIT               |
+| `hono`                        | 4.13.14      | MIT               |
+| `jose`                        | 6.2.14       | MIT               |
 | `jsdom`                       | 30.1.3       | MIT               |
 | `prettier`                    | 3.9.10       | MIT               |
 | `react`                       | 19.3.1       | MIT               |
 | `react-dom`                   | 19.3.1       | MIT               |
-| `react-router-dom`            | 7.18.4       | MIT               |
+| `react-router-dom`            | 7.18.5       | MIT               |
 | `tsx`                         | 4.23.15      | MIT               |
 | `typescript`                  | 6.0.3        | Apache-2.0        |
 | `typescript-eslint`           | 8.71.2       | MIT               |
 | `vite`                        | 8.3.4        | MIT               |
 | `vitest`                      | 4.1.12       | MIT               |
-| `wrangler`                    | 4.151.1      | MIT OR Apache-2.0 |
+| `wrangler`                    | 4.156.0      | MIT OR Apache-2.0 |
 | `zod`                         | 4.6.7        | MIT               |
 
 ## Dependencies requiring notice or reciprocal-license review
