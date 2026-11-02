@@ -29,17 +29,17 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | `@cloudflare/puppeteer`       | 1.4.0        | Apache-2.0        |
 | `@cloudflare/vite-plugin`     | 1.66.0       | MIT               |
 | `@cloudflare/vitest-plugin`   | 1.4.11       | MIT               |
-| `@cloudflare/workers-types`   | 5.20261101.1 | MIT OR Apache-2.0 |
+| `@cloudflare/workers-types`   | 5.20261030.1 | MIT OR Apache-2.0 |
 | `@eslint/js`                  | 10.0.1       | MIT               |
 | `@testing-library/jest-dom`   | 7.0.1        | MIT               |
 | `@testing-library/react`      | 16.3.3       | MIT               |
 | `@testing-library/user-event` | 14.6.8       | MIT               |
-| `@types/node`                 | 26.6.5       | MIT               |
+| `@types/node`                 | 26.6.6       | MIT               |
 | `@types/react`                | 19.3.0       | MIT               |
 | `@types/react-dom`            | 19.3.0       | MIT               |
 | `@vitejs/plugin-react`        | 6.1.2        | MIT               |
 | `@vitest/coverage-v8`         | 4.1.12       | MIT               |
-| `eslint`                      | 10.13.0      | MIT               |
+| `eslint`                      | 10.14.0      | MIT               |
 | `eslint-plugin-react-hooks`   | 7.1.1        | MIT               |
 | `eslint-plugin-react-refresh` | 0.5.7        | MIT               |
 | `hono`                        | 4.13.13      | MIT               |
@@ -51,8 +51,8 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | `react-router-dom`            | 7.18.4       | MIT               |
 | `tsx`                         | 4.23.15      | MIT               |
 | `typescript`                  | 6.0.3        | Apache-2.0        |
-| `typescript-eslint`           | 8.71.2       | MIT               |
-| `vite`                        | 8.3.4        | MIT               |
+| `typescript-eslint`           | 8.72.1       | MIT               |
+| `vite`                        | 8.3.5        | MIT               |
 | `vitest`                      | 4.1.12       | MIT               |
 | `wrangler`                    | 4.156.0      | MIT OR Apache-2.0 |
 | `zod`                         | 4.6.7        | MIT               |
