@@ -42,13 +42,13 @@ This file is generated from `package-lock.json` by `npm run licenses:report`. It
 | `eslint`                      | 10.14.0      | MIT               |
 | `eslint-plugin-react-hooks`   | 7.1.1        | MIT               |
 | `eslint-plugin-react-refresh` | 0.5.7        | MIT               |
-| `hono`                        | 4.13.13      | MIT               |
-| `jose`                        | 6.2.12       | MIT               |
+| `hono`                        | 4.13.16      | MIT               |
+| `jose`                        | 6.2.15       | MIT               |
 | `jsdom`                       | 30.1.3       | MIT               |
 | `prettier`                    | 3.9.10       | MIT               |
 | `react`                       | 19.3.1       | MIT               |
 | `react-dom`                   | 19.3.1       | MIT               |
-| `react-router-dom`            | 7.18.4       | MIT               |
+| `react-router-dom`            | 7.18.5       | MIT               |
 | `tsx`                         | 4.23.15      | MIT               |
 | `typescript`                  | 6.0.3        | Apache-2.0        |
 | `typescript-eslint`           | 8.72.1       | MIT               |
